@@ -1,0 +1,17 @@
+{
+  "0": "Standby",
+  "2": "FW Updating",
+  "4": "PV On-grid",
+  "8": "PV Charge",
+  "12": "PV Charge/Grid",
+  "16": "Battery/Grid",
+  "17": "Bypass",
+  "20": "PV & Battery/Grid",
+  "25": "PV Charge/Bypass",
+  "32": "AC Charge",
+  "40": "PV & AC Charge",
+  "64": "Battery",
+  "128": "PV Off Grid",
+  "136": "PV Charge Off Grid",
+  "192": "PV & Battery Off Grid"
+}

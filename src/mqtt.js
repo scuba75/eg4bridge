@@ -1,0 +1,77 @@
+'use strict'
+const mqtt = require('mqtt')
+const log = require('./logger')
+let connectMsg = false, status = false
+const MQTT_HOST = process.env.MQTT_HOST || 'mqtt-broker'
+const MQTT_PORT = process.env.MQTT_PORT || '1883'
+const MQTT_USER = process.env.MQTT_USER || 'hassio'
+const MQTT_PASS = process.env.MQTT_PASS || 'hassio'
+const DEVICE_NAME = process.env.DEVICE_NAME || 'solar_inverter'
+const connectUrl = `mqtt://${MQTT_HOST}:${MQTT_PORT}`
+log.info(`MQTT Connect URL: ${connectUrl}`)
+const client = mqtt.connect(connectUrl, {
+  clientId: `mqtt_${DEVICE_NAME}`,
+  clean: true,
+  keepalive: 60,
+  connectTimeout: 4000,
+  username: MQTT_USER,
+  password: MQTT_PASS,
+  reconnectPeriod: 1000,
+})
+client.on('connect', ()=>{
+  if(!connectMsg){
+    connectMsg = true
+    status = true
+    log.info('MQTT Connection successful...')
+  }
+})
+client.on('message', (topic, msg)=>{
+  log.info(`${topic}: ${msg?.toString()}`)
+})
+const sendAliveMsg = ()=>{
+  client.publish('solar_inverter/status/state', (Date.now())?.toString(), { qos: 1, retrin: false, properties: { messageExpiryInterval: 60 } }, (error)=>{
+    if(error) log.error(error)
+  })
+}
+module.exports.status = ()=>{
+  return status
+}
+module.exports.publish = (topic, message, retain = false, expire = false) =>{
+  return new Promise((resolve, reject)=>{
+    let opts = { qos: 1, retain: retain }
+    if(expire){
+      opts.properties = { messageExpiryInterval: 60 }
+    }
+    client.publish(topic, message, opts, (error)=>{
+      if(error) reject(error)
+      resolve()
+    })
+  })
+}
+module.exports.registerSensor = (id, device_name, payload)=>{
+  if(!id || !device_name || !payload) return
+  return new Promise((resolve, reject)=>{
+    let payload = {
+      name: `${DEVICE_NAME} ${name}`,
+      state_topic: `${device_name}/${id}/state`,
+      uniq_id: `${id}`,
+      device: {
+        ids: [`${device_name}`],
+        name: `${DEVICE_NAME}`
+      }
+    }
+    client.publish(`homeassistant/sensor/${device_name}_${id}/config`, JSON.stringify(payload), { qos: 1, retain: true }, (error, packet)=>{
+      if(error) reject(error)
+      resolve()
+    })
+  })
+}
+module.exports.sendSensorValue = (topic, value, retain = false)=>{
+  if(!topic || !value) return
+  return new Promise((resolve, reject)=>{
+    client.publish(topic, value, { qos: 1, retain: retain }, (error)=>{
+      if(error) reject(error)
+      resolve()
+    })
+  })
+}
