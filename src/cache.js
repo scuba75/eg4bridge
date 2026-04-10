@@ -7,7 +7,7 @@ const saveData = () =>{
   try{
     let dataFile = `${baseDir}/data/data.json`
     fs.writeFileSync(dataFile, JSON.stringify({ data: CACHE_DATA, updated: Date.now() }))
-    log.info(`Cache backed up to ${dataFile}`)
+    log.debug(`Cache backed up to ${dataFile}`)
     return true
   }catch(e){
     log.error(e)

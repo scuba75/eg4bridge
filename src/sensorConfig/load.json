@@ -1,0 +1,59 @@
+{
+  "load_energy_cost_daily": {
+    "name": "Load Energy Cost (Daily)",
+    "topic": "load_energy_cost_daily",
+    "main": "both",
+    "individual": true,
+    "config": {
+      "state_class": "total",
+      "unit_of_measurement": "$",
+      "device_class": "monetary",
+      "accuracy_decimals": 2,
+      "value_template": "{{ float(value) | round(2) }}"
+    }
+  },
+  "load_energy_daily": {
+    "name": "Load Energy (Daily)",
+    "topic": "load_energy_daily",
+    "main": "both",
+    "individual": true,
+    "config": {
+      "state_class": "total",
+      "unit_of_measurement": "kWh",
+      "device_class": "energy"
+    }
+  },
+  "load_energy_solar_daily": {
+    "name": "Load Energy Solar (Daily)",
+    "topic": "load_energy_solar_daily",
+    "main": "both",
+    "individual": true,
+    "config": {
+      "state_class": "total",
+      "unit_of_measurement": "kWh",
+      "device_class": "energy"
+    }
+  },
+  "load_energy_grid_daily": {
+    "name": "Load Energy Grid (Daily)",
+    "topic": "load_energy_grid_daily",
+    "main": "both",
+    "individual": true,
+    "config": {
+      "state_class": "total",
+      "unit_of_measurement": "kWh",
+      "device_class": "energy"
+    }
+  },
+  "load_power": {
+    "name": "Load Power",
+    "topic": "load_power",
+    "main": "both",
+    "individual": true,
+    "config": {
+      "state_class": "measurement",
+      "unit_of_measurement": "W",
+      "device_class": "power"
+    }
+  }
+}

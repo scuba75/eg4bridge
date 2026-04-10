@@ -2,7 +2,9 @@
 const log = require('./logger')
 const cache = require('./cache')
 const mqtt = require('./mqtt')
-require('./inverters')
+const createSensors = require('./createSensors')
+
+const inverters = require('./inverters')
 require('./express')
 
 const checkCache = ()=>{
@@ -18,10 +20,14 @@ const checkCache = ()=>{
     log.error(e)
   }
 }
-const checkMqtt = ()=>{
+const checkMqtt = async()=>{
   try{
     let status = mqtt.status()
-    if(status) return
+    if(status) status = await createSensors()
+    if(status){
+      inverters.start()
+      return
+    }
     setTimeout(checkMqtt, 5000)
   }catch(e){
     log.error(e)

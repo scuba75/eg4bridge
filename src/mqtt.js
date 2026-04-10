@@ -1,6 +1,8 @@
 'use strict'
 const mqtt = require('mqtt')
 const log = require('./logger')
+const processMsg = require('./processMsg')
+
 let connectMsg = false, status = false
 const MQTT_HOST = process.env.MQTT_HOST || 'mqtt-broker'
 const MQTT_PORT = process.env.MQTT_PORT || '1883'
@@ -24,15 +26,14 @@ client.on('connect', ()=>{
     status = true
     log.info('MQTT Connection successful...')
   }
+  client.subscribe('solar_inverter/set/#', (err)=>{
+    if(err) log.error(err)
+  })
 })
 client.on('message', (topic, msg)=>{
-  log.info(`${topic}: ${msg?.toString()}`)
+  processMsg(topic?.split('/')[2], msg?.toString())
 })
-const sendAliveMsg = ()=>{
-  client.publish('solar_inverter/status/state', (Date.now())?.toString(), { qos: 1, retrin: false, properties: { messageExpiryInterval: 60 } }, (error)=>{
-    if(error) log.error(error)
-  })
-}
+
 module.exports.status = ()=>{
   return status
 }
@@ -48,19 +49,11 @@ module.exports.publish = (topic, message, retain = false, expire = false) =>{
     })
   })
 }
-module.exports.registerSensor = (id, device_name, payload)=>{
-  if(!id || !device_name || !payload) return
+module.exports.registerSensor = (topic, payload)=>{
+  if(!topic || !payload) return
   return new Promise((resolve, reject)=>{
-    let payload = {
-      name: `${DEVICE_NAME} ${name}`,
-      state_topic: `${device_name}/${id}/state`,
-      uniq_id: `${id}`,
-      device: {
-        ids: [`${device_name}`],
-        name: `${DEVICE_NAME}`
-      }
-    }
-    client.publish(`homeassistant/sensor/${device_name}_${id}/config`, JSON.stringify(payload), { qos: 1, retain: true }, (error, packet)=>{
+
+    client.publish(topic, JSON.stringify(payload), { qos: 1, retain: true }, (error, packet)=>{
       if(error) reject(error)
       resolve()
     })

@@ -5,8 +5,10 @@ const os = require('os');
 const dns = require('dns').promises;
 const EventEmitter = require('events');
 
-const inverterState = require('./inverterState.json')
-
+const INVERTER_STATES = require('./inverter_states.json')
+const WARNING_CODES = require('./warning_codes.json')
+const FAULT_CODES = require('./fault_codes.json')
+const POWER_COST = parseFloat(process.env.POWER_COST || "0.1044288425047438")
 class EG4Bridge extends EventEmitter {
   // Protocol constants
   static LUX_TCP_TRANSLATED_DATA = 0xC2;
@@ -381,10 +383,10 @@ class EG4Bridge extends EventEmitter {
 
     const derived = {
       schedule: {
-        ac_chg_start_0: { raw: this.holdRegs[68], register: 68 },
-        ac_chg_end_0: { raw: this.holdRegs[69], register: 69 },
-        ac_first_start_0: { raw: this.holdRegs[152], register: 152 },
-        ac_first_end_0: { raw: this.holdRegs[153], register: 153}
+        grid_charge_start: { raw: this.holdRegs[68], register: 68 },
+        grid_charge_end: { raw: this.holdRegs[69], register: 69 },
+        grid_first_start: { raw: this.holdRegs[152], register: 152 },
+        grid_first_end: { raw: this.holdRegs[153], register: 153}
       }
     };
 
@@ -400,12 +402,12 @@ class EG4Bridge extends EventEmitter {
     const i16 = (o) => buf.readInt16LE(o);
 
     const status = u16(0);
-    const v_pv_1 = i16(2)  / 10.0;
+    const pv_voltage = i16(2)  / 10.0;
     const v_pv_2 = i16(4)  / 10.0;
     const v_pv_3 = i16(6)  / 10.0;
-    const v_bat  = i16(8)  / 10.0;
+    const battery_voltage  = i16(8)  / 10.0;
 
-    const soc = buf.readUInt8(10);
+    const battery_soc = buf.readUInt8(10);
     const soh = buf.readUInt8(11);
 
     const internal_fault = u16(12);
@@ -413,10 +415,10 @@ class EG4Bridge extends EventEmitter {
     const p_pv_1 = i16(14);
     const p_pv_2 = i16(16);
     const p_pv_3 = i16(18);
-    const p_charge = i16(20);
-    const p_discharge = i16(22);
+    const battery_power_charge = i16(20);
+    const battery_power_discharge = i16(22);
 
-    const v_ac_r = i16(24) / 10.0;
+    const grid_voltage = i16(24) / 10.0;
     const v_ac_s = i16(26) / 10.0;
     const v_ac_t = i16(28) / 10.0;
     const f_ac   = i16(30) / 100.0;
@@ -435,51 +437,57 @@ class EG4Bridge extends EventEmitter {
     const apparent_eps_power = i16(50);
 
     const p_to_grid = i16(52);
-    const p_to_user = i16(54);
+    const grid_power_importing = i16(54);
 
-    const e_pv_1_day = i16(56) / 10.0;
+    const pv_energy_daily = i16(56) / 10.0;
     const e_pv_2_day = i16(58) / 10.0;
     const e_pv_3_day = i16(60) / 10.0;
     const e_inv_day  = i16(62) / 10.0;
-    const e_rec_day  = i16(64) / 10.0;
-    const e_chg_day  = i16(66) / 10.0;
-    const e_dischg_day = i16(68) / 10.0;
+    const ac_charge_energy_daily  = i16(64) / 10.0;
+    const battery_energy_charge_daily  = i16(66) / 10.0;
+    const battery_energy_discharge_daily = i16(68) / 10.0;
     const e_eps_day  = i16(70) / 10.0;
     const e_to_grid_day = i16(72) / 10.0;
-    const e_to_user_day = i16(74) / 10.0;
+    const grid_energy_daily = i16(74) / 10.0;
 
     const v_bus_1 = i16(76) / 10.0;
     const v_bus_2 = i16(78) / 10.0;
 
-    const pv_total = p_pv_1 + p_pv_2 + p_pv_3;
+    const pv_power = p_pv_1 + p_pv_2 + p_pv_3;
 
-    const home_live = p_to_user - p_rec + p_inv - p_to_grid;
-    const home_day  = (e_to_user_day - e_rec_day + e_inv_day - e_to_grid_day);
+    const home_live = grid_power_importing - p_rec + p_inv - p_to_grid;
+    const home_day  = (grid_energy_daily - ac_charge_energy_daily + e_inv_day - e_to_grid_day);
 
-    const status_text = inverterState[status] || "Unknown"
+    const status_text = INVERTER_STATES[status] || "Unknown"
+
+    const battery_power = (battery_power_discharge > 0) ? -battery_power_discharge : battery_power_charge
+
+    const battery_energy_charge_solar_daily = battery_energy_charge_daily - ac_charge_energy_daily
+
+    const load_energy_solar_daily = (pv_energy_daily > battery_energy_charge_solar_daily ) ? (pv_energy_daily - battery_energy_charge_solar_daily):0
+    const load_energy_grid_daily = (grid_energy_daily > ac_charge_energy_daily) ? (grid_energy_daily - ac_charge_energy_daily):0
+    const load_energy_daily = load_energy_solar_daily + load_energy_grid_daily
     // Emit raw + derived fields
     const payload = {
       status, status_text,
-      v_pv_1, v_pv_2, v_pv_3, v_bat,
-      soc, soh,
-      internal_fault,
-      p_pv_1, p_pv_2, p_pv_3, pv_total,
-      p_charge, p_discharge,
-      v_ac_r, v_ac_s, v_ac_t, f_ac,
-      p_inv, p_rec,
-      rms_current, pf,
-      v_eps_r, v_eps_s, v_eps_t, f_eps,
-      p_to_eps, apparent_eps_power,
-      p_to_grid, p_to_user,
-      e_pv_1_day, e_pv_2_day, e_pv_3_day,
-      e_inv_day, e_rec_day,
-      e_chg_day, e_dischg_day,
-      e_eps_day, e_to_grid_day, e_to_user_day,
-      v_bus_1, v_bus_2,
-      home_live, home_day,
-      p_home: (p_to_user - p_rec),
-      bat_flow: (p_discharge > 0) ? -p_discharge : p_charge,
-      grid_flow:(p_to_user > 0)   ? -p_to_user   : p_to_grid,
+      pv_voltage, battery_voltage,
+      battery_soc, pv_power, battery_power,
+      battery_power_charge, battery_power_discharge,
+      grid_voltage, grid_power_importing,
+      pv_energy_daily, ac_charge_energy_daily,
+      battery_energy_charge_daily, battery_energy_discharge_daily,
+      grid_energy_daily, battery_energy_charge_solar_daily, load_energy_daily,
+      load_energy_solar_daily, load_energy_grid_daily,
+      pv_current: (pv_voltage > 0) ? (Math.round((p_pv_1 / pv_voltage) * 100) / 100) : 0,
+      grid_current: (grid_voltage > 0) ? (Math.round((grid_power_importing / grid_voltage) * 100) / 100) : 0,
+      battery_current: (battery_voltage > 0) ? (Math.round((battery_power / battery_voltage) * 100) / 100) : 0,
+      battery_charging: (battery_power_charge > 0) ? "ON":"OFF",
+      battery_discharging: (battery_power_discharge > 50) ? "ON":"OFF",
+      grid_importing: (grid_power_importing > 100) ? "ON":"OFF",
+      grid_available: (grid_voltage > 100) ? "ON":"OFF",
+      battery_energy_cost_daily: (Math.round((ac_charge_energy_daily * POWER_COST) * 100) / 100),
+      grid_energy_cost_daily: (Math.round((grid_energy_daily * POWER_COST) * 100) / 100),
+      load_energy_cost_daily: (Math.round((load_energy_grid_daily * POWER_COST) * 100) / 100)
     };
 
     this.emit('data', payload);
@@ -503,11 +511,11 @@ class EG4Bridge extends EventEmitter {
     const e_to_grid_all = i32(32) / 10.0;
     const e_to_user_all = i32(36) / 10.0;
 
-    const fault_code   = u32(40);
-    const warning_code = u32(44);
+    const active_fault   = u32(40);
+    const active_warning = u32(44);
 
     const t_inner = i16(48);
-    const t_rad_1 = i16(50);
+    const temperature = i16(50);
     const t_rad_2 = i16(52);
     const t_bat   = i16(54);
 
@@ -516,15 +524,9 @@ class EG4Bridge extends EventEmitter {
     const home_total = (e_to_user_all - e_rec_all + e_inv_all - e_to_grid_all);
 
     this.emit('data', {
-      e_pv_1_all, e_pv_2_all, e_pv_3_all,
-      e_pv_all_total: e_pv_1_all + e_pv_2_all + e_pv_3_all,
-      e_inv_all, e_rec_all,
-      e_chg_all, e_dischg_all, e_eps_all,
-      e_to_grid_all, e_to_user_all,
-      fault_code, warning_code,
-      t_inner, t_rad_1, t_rad_2, t_bat,
-      uptime,
-      home_total
+      active_fault, active_warning, temperature,
+      active_fault_text: FAULT_CODES[active_fault] || 'Unknown',
+      active_warning_text: WARNING_CODES[active_warning] || 'Unknown'
     });
   }
 
@@ -550,7 +552,7 @@ class EG4Bridge extends EventEmitter {
     const max_cell_temp = i16(46) / 10.0;
     const min_cell_temp = i16(48) / 10.0;
 
-    const bat_cycle_count = u16(52);
+    const battery_cycle_count = u16(52);
 
     const reg113 = u16(66);
 
@@ -559,7 +561,7 @@ class EG4Bridge extends EventEmitter {
     const orderBits    = (reg113 >> 4)  & 0x03;
     const parallelNum  = (reg113 >> 8)  & 0xFF;
 
-    const master_slave_text =
+    const role =
       master_slave === 1 ? 'Master' :
       master_slave === 2 ? 'Slave'  :
       'Unknown';
@@ -575,15 +577,8 @@ class EG4Bridge extends EventEmitter {
     const bs = (bat_status_inv >= 0 && bat_status_inv < 17) ? bat_status_inv : 16;
 
     this.emit('data', {
-      max_chg_curr, max_dischg_curr,
-      charge_volt_ref, dischg_cut_volt,
-      bat_status_inv,
-      bat_count, bat_capacity,
-      bat_current,
-      max_cell_volt, min_cell_volt,
-      max_cell_temp, min_cell_temp,
-      bat_cycle_count, master_slave,
-      master_slave_text, p_load2
+      battery_cycle_count, master_slave,
+      battery_cycle_count, role
     });
   }
 
@@ -602,23 +597,20 @@ class EG4Bridge extends EventEmitter {
     const eps_L2_volt = i16(16) / 10.0;
     const eps_L1_watt = i16(18);
     const eps_L2_watt = i16(20);
-
+    /*
     this.emit('data', {
-      gen_input_volt, gen_input_freq,
-      gen_power_watt,
-      gen_power_day, gen_power_all,
-      eps_L1_volt, eps_L2_volt,
-      eps_L1_watt, eps_L2_watt
+
     });
+    */
   }
 
   processBank4(buf) {
     const i16 = (o) => buf.readInt16LE(o);
-    const p_load_ongrid = i16(20);
-    const e_load_day    = i16(22) / 10.0;
+    const load_power = i16(20);
+    const eload_day    = i16(22) / 10.0;
     const e_load_all_l  = i16(24) / 10.0;
 
-    this.emit('data', { p_load_ongrid, e_load_day, e_load_all_l });
+    this.emit('data', { load_power });
   }
 
   // --------------------------

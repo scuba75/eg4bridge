@@ -1,0 +1,46 @@
+{
+  "pv_current": {
+    "name": "PV Current",
+    "topic": "pv_current",
+    "main": "both",
+    "individual": true,
+    "config": {
+      "state_class": "measurement",
+      "unit_of_measurement": "A",
+      "device_class": "current"
+    }
+  },
+  "pv_energy_daily": {
+    "name": "PV Energy (Daily)",
+    "topic": "pv_energy_daily",
+    "main": "both",
+    "individual": true,
+    "config": {
+      "state_class": "total",
+      "unit_of_measurement": "kWh",
+      "device_class": "energy"
+    }
+  },
+  "pv_power": {
+    "name": "PV Power",
+    "topic": "pv_power",
+    "main": "both",
+    "individual": true,
+    "config": {
+      "state_class": "measurement",
+      "unit_of_measurement": "W",
+      "device_class": "power"
+    }
+  },
+  "pv_voltage": {
+    "name": "PV Voltage",
+    "topic": "pv_voltage",
+    "main": "average",
+    "individual": true,
+    "config": {
+      "state_class": "measurement",
+      "unit_of_measurement": "V",
+      "device_class": "voltage"
+    }
+  }
+}

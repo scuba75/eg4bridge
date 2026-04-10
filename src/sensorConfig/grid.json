@@ -1,0 +1,90 @@
+{
+  "ac_charge_energy_daily": {
+    "name": "AC Charge Energy (Daily)",
+    "topic": "ac_charge_energy_daily",
+    "main": "both",
+    "individual": true,
+    "config": {
+      "state_class": "total",
+      "unit_of_measurement": "kWh",
+      "device_class": "energy"
+    }
+  },
+  "grid_available": {
+    "name": "Grid Available",
+    "topic": "grid_available",
+    "main": "master",
+    "sensor_type": "binary_sensor",
+    "config": {
+      "device_class": "connectivity",
+      "icon": "mdi:transmission-tower"
+    }
+
+  },
+  "grid_current": {
+    "name": "Grid Current",
+    "topic": "grid_current",
+    "main": "both",
+    "individual": true,
+    "config": {
+      "state_class": "measurement",
+      "unit_of_measurement": "A",
+      "device_class": "current"
+    }
+  },
+  "grid_energy_cost_daily": {
+    "name": "Grid Energy Cost (Daily)",
+    "topic": "Grid_energy_cost_daily",
+    "main": "both",
+    "individual": true,
+    "config": {
+      "state_class": "total",
+      "unit_of_measurement": "$",
+      "device_class": "monetary",      
+      "accuracy_decimals": 2,
+      "value_template": "{{ float(value) | round(2) }}"
+    }
+  },
+  "grid_energy_daily": {
+    "name": "Grid Energy (Daily)",
+    "topic": "grid_energy_daily",
+    "main": "both",
+    "individual": true,
+    "config": {
+      "state_class": "total",
+      "unit_of_measurement": "kWh",
+      "device_class": "energy"
+    }
+  },
+  "grid_power_importing": {
+    "name": "Grid Power",
+    "topic": "grid_power_importing",
+    "main": "both",
+    "individual": true,
+    "config": {
+      "state_class": "measurement",
+      "unit_of_measurement": "W",
+      "device_class": "power"
+    }
+  },
+  "grid_importing": {
+    "name": "Grid Importing",
+    "topic": "grid_importing",
+    "main": "master",
+    "sensor_type": "binary_sensor",
+    "config": {
+      "icon": "mdi:transmission-tower-import"
+    }
+  },
+  "grid_voltage": {
+    "name": "Grid Voltage",
+    "topic": "grid_voltage",
+    "main": "master",
+    "individual": true,
+    "config": {
+      "state_class": "measurement",
+      "unit_of_measurement": "V",
+      "device_class": "voltage"
+    }
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "active_fault_text": {
+    "name": "Active Fault",
+    "topic": "active_fault",
+    "individual": true,
+    "config": {
+      "icon": "mdi:alert-circle"
+    }
+  },
+  "active_warning_text": {
+    "name": "Active Warning",
+    "topic": "active_warning",
+    "individual": true,
+    "config": {
+      "icon": "mdi:alert"
+    }
+  },
+  "master_slave": {
+    "name": "Master Inverter",
+    "topic": "master_inverter",
+    "main": "master",
+    "config": {
+      "icon": "mdi:state-machine"
+    }
+  },
+  "role": {
+    "name": "Role",
+    "topic": "role",
+    "individual": "true",
+    "config": {
+      "icon": "mdi:account"
+    }
+  },
+  "status_text": {
+    "name": "Status",
+    "topic": "status",
+    "main": "master",
+    "individual": true,
+    "config": {
+      "icon": "mdi:state-machine"
+    }
+  },
+  "temperature": {
+    "name": "Temperature",
+    "topic": "temperature",
+    "main": "average",
+    "individual": true,
+    "config": {
+      "state_class": "measurement",
+      "unit_of_measurement": "°C",
+      "device_class": "temperature"
+    }
+  },
+  "updated": {
+    "name": "Data Updated",
+    "topic": "updated",
+    "main": "master",
+    "config": {
+      "entity_category": "diagnostic",
+      "device_class": "timestamp",
+      "value_template": "{{ int(value) | timestamp_local }}"
+    }
+  }
+}

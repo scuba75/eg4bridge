@@ -5,7 +5,7 @@ const mqtt = require('./mqtt')
 const cache = require('./cache')
 const schedule = require('./schedule')
 
-const sensorConfig = require('./sensorConfig.json')
+const sensorConfig = require('./sensorConfig')
 const updateSensors = require('./updateSensors')
 
 let INVERTER1_IP = process.env.INVERTER1_IP, INVERTER1_PORT = (process.env.INVERTER1_PORT || 8000), INVERTER1_DONGLE_SN = process.env.INVERTER1_DONGLE_SN, INVERTER1_SN = process.env.INVERTER1_SN
@@ -71,9 +71,17 @@ inverter1.on('hold_data', async(d)=>{
     if(topic) mqtt.publish(`solar_inverter/main/${topic}/state`, decodedValue?.toString())
 
     let desired = cache.get(i)
-    if(!desired?.raw) await cache.set(i, { raw: d.schedule[i].raw, decodedValue: decodedValue, register: d.schedule[i].register })
-    if(desired?.decodedValue && topic) mqtt.publish(`solar_inverter/main/${topic}_desired/state`, desired?.decodedValue?.toString())
-    if(desired?.raw != d.schedule[i].raw && d.schedule[i].register > 0 && desired.raw >= 0) inverter1.queueWrite(d.schedule[i].register, desired.raw)
+    if(!desired?.raw){
+      await cache.set(i, { raw: d.schedule[i].raw, decodedValue: decodedValue, register: d.schedule[i].register })
+      desired = cache.get(i)
+    }
+    if(desired?.decodedValue && topic){
+      let desired_topic = topic?.replace('_actual', '_desired')
+      if(!dataList.schedule) dataList.schedule = {}
+      dataList.schedule[desired_topic] = desired?.decodedValue
+      mqtt.publish(`solar_inverter/main/${desired_topic}/state`, desired?.decodedValue?.toString())
+    }
+    if(desired?.raw != d.schedule[i].raw && d.schedule[i].register > 0 && desired?.raw >= 0) inverter1.queueWrite(d.schedule[i].register, desired.raw)
   }
 });
 
@@ -98,6 +106,11 @@ inverter2.on('data', (d)=>{
   }
   updateSensors(2, 1, MASTER_INVERTER, d)
 })
-
-if(INVERTER1_IP) inverter1.start()
-if(INVERTER2_IP) inverter2.start()
+module.exports.start = ()=>{
+  try{
+    if(INVERTER1_IP) inverter1.start()
+    if(INVERTER2_IP) inverter2.start()
+  }catch(e){
+    log.error(e)
+  }
+}

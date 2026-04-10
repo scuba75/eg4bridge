@@ -2,11 +2,15 @@
 const log = require('./logger')
 const { dataList } = require('./dataList')
 const mqtt = require('./mqtt')
-const sensorConfig = require('./sensorConfig.json')
+const sensorConfig = require('./sensorConfig')
 
 module.exports = (inverterNum, otherInverter, MASTER_INVERTER, data) =>{
   try{
     if(!inverterNum || !data || !MASTER_INVERTER) return;
+
+    if(!dataList.main) dataList.main = {}
+    if(!dataList[inverterNum]) dataList[inverterNum] = {}
+    if(!dataList[otherInverter]) dataList[otherInverter] = {}
 
     for(let i in data){
       if(!i || (!data[i] && +(data[i] != 0))) continue;
@@ -19,35 +23,35 @@ module.exports = (inverterNum, otherInverter, MASTER_INVERTER, data) =>{
 
 
 
-      if(sensor?.inverter){
+      if(sensor?.main){
         let main_state_topic = `solar_inverter/main/${main_topic}/state`
-        if(sensor.inverter == "master" && inverterNum == MASTER_INVERTER){
+        if(sensor.main == "master" && inverterNum == MASTER_INVERTER){
           let value = data[i]?.toString()
           if(i == 'master_slave') value = inverterNum?.toString()
-          if(!dataList.main) dataList.main = {}
           dataList.main[i] = value
           mqtt.publish(main_state_topic, value)
         }
-        if(sensor.inverter == "both"){
+        if(sensor.main == "both"){
           let value = parseFloat(data[i] || 0)
           if(dataList[otherInverter]) value += parseFloat(dataList[otherInverter][i] || 0)
-          if(!dataList.main) dataList.main = {}
           dataList.main[i] = value
           mqtt.publish(main_state_topic, value?.toString())
         }
-        if(sensor.inverter == "average"){
+        if(sensor.main == "average"){
           let value = parseFloat(data[i] || 0), alt_value = 0
           if(dataList[otherInverter]) alt_value += parseFloat(dataList[otherInverter][i] || 0)
-          if(alt_value) value = (value + alt_value) / 2
-
-          if(!dataList.main) dataList.main = {}
+          if(alt_value) value = (Math.round(((value + alt_value) / 2) * 10) / 10)
           dataList.main[i] = value
           mqtt.publish(main_state_topic, value?.toString())
+        }
+        if(sensor.main == inverterNum){
+          dataList.main[i] = data[i]
+          mqtt.publish(main_state_topic, data[i]?.toString())
         }
       }
 
       if(sensor?.individual){
-        let state_topic = `solar_inverter/inverter${inverterNum}/${main_topic}/state`
+        let state_topic = `solar_inverter/${inverterNum}/${main_topic}/state`
         mqtt.publish(state_topic, data[i]?.toString())
       }
       if(sensor?.calcuate?.id){
@@ -75,7 +79,7 @@ module.exports = (inverterNum, otherInverter, MASTER_INVERTER, data) =>{
         dataList[inverterNum][sensor.calcuate.id] = real_value
         mqtt.publish(`solar_inverter/inverter${inverterNum}/${calc_topic}/state`, real_value?.toString())
 
-        if(calc_sensor.inverter == 'both'){
+        if(calc_sensor.main == 'both'){
           let main_value = real_value
           if(dataList[otherInverter]) main_value += parseFloat(dataList[otherInverter][sensor.calcuate.id] || 0)
 
@@ -84,11 +88,9 @@ module.exports = (inverterNum, otherInverter, MASTER_INVERTER, data) =>{
           mqtt.publish(`solar_inverter/main/${calc_topic}/state`, main_value?.toString())
         }
       }
-
-
-
     }
-    mqtt.publish('solar_inverter/updated/state', (Date.now())?.toString())
+    dataList.main.updated = Math.round((Date.now()) / 1000)
+    if(dataList?.main?.updated) mqtt.publish('solar_inverter/main/updated/state', dataList.main.updated.toString())
   }catch(e){
     log.error(e)
   }

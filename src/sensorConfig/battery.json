@@ -1,0 +1,142 @@
+{
+  "battery_charging": {
+    "name": "Battery Charging",
+    "topic": "battery_charging",
+    "main": "master",
+    "sensor_type": "binary_sensor",
+    "config": {
+      "device_class": "battery_charging"
+    }
+  },
+  "battery_current": {
+    "name": "Battery Current",
+    "topic": "battery_current",
+    "main": "both",
+    "individual": true,
+    "sensor_type": "sensor",
+    "config": {
+      "state_class": "measurement",
+      "unit_of_measurement": "A",
+      "device_class": "current"
+    }
+  },
+  "battery_cycle_count": {
+    "name": "Battery Cycles",
+    "topic": "battery_cycle_count",
+    "inverter": 1,
+    "config": {
+      "state_class": "total_increasing",
+      "unit_of_measurement": "cycles",
+      "accuracy_decimals": 0
+    }
+  },
+  "battery_discharging": {
+    "name": "Battery Discharging",
+    "topic": "battery_discharging",
+    "main": "master",
+    "sensor_type": "binary_sensor",
+    "config": {
+      "icon": "mdi:battery-arrow-down"
+    }
+  },
+  "battery_energy_charge_daily": {
+    "name": "Battery Energy Charge (Daily)",
+    "topic": "battery_energy_charge_daily",
+    "main": "both",
+    "individual": true,
+    "config": {
+      "state_class": "total",
+      "unit_of_measurement": "kWh",
+      "device_class": "energy"
+    }
+  },
+  "battery_energy_charge_solar_daily": {
+    "name": "Battery Energy Charge Solar (Daily)",
+    "topic": "battery_energy_charge_solar_daily",
+    "main": "both",
+    "individual": true,
+    "config": {
+      "state_class": "total",
+      "unit_of_measurement": "kWh",
+      "device_class": "energy"
+    }
+  },
+  "battery_energy_cost_daily": {
+    "name": "Battery Energy Cost (Daily)",
+    "topic": "battery_energy_cost_daily",
+    "main": "both",
+    "individual": true,
+    "config": {
+      "state_class": "total",
+      "unit_of_measurement": "$",
+      "device_class": "monetary",
+      "accuracy_decimals": 2,
+      "value_template": "{{ float(value) | round(2) }}"
+    }
+  },
+  "battery_energy_discharge_daily": {
+    "name": "Battery Energy Discharge (Daily)",
+    "topic": "battery_energy_discharge_daily",
+    "main": "both",
+    "individual": true,
+    "config": {
+      "state_class": "total",
+      "unit_of_measurement": "kWh",
+      "device_class": "energy"
+    }
+  },
+  "battery_power": {
+    "name": "Battery Power",
+    "topic": "battery_power",
+    "main": "both",
+    "individual": true,
+    "config": {
+      "state_class": "measurement",
+      "unit_of_measurement": "W",
+      "device_class": "power"
+    }
+  },
+  "battery_power_charge": {
+    "name": "Battery Power Charge",
+    "topic": "battery_power_charge",
+    "main": "both",
+    "individual": true,
+    "config": {
+      "state_class": "measurement",
+      "unit_of_measurement": "W",
+      "device_class": "power"
+    }
+  },
+  "battery_power_discharge": {
+    "name": "Battery Power Discharge",
+    "topic": "battery_power_discharge",
+    "main": "both",
+    "individual": true,
+    "config": {
+      "state_class": "measurement",
+      "unit_of_measurement": "W",
+      "device_class": "power"
+    }
+  },
+  "battery_soc": {
+    "name": "Battery SOC",
+    "topic": "battery_soc",
+    "main": "master",
+    "config": {
+      "state_class": "measurement",
+      "unit_of_measurement": "%",
+      "device_class": "battery"
+    }
+  },
+  "battery_voltage": {
+    "name": "Battery Voltage",
+    "topic": "battery_voltage",
+    "main": "master",
+    "individual": true,
+    "config": {
+      "state_class": "measurement",
+      "unit_of_measurement": "V",
+      "device_class": "voltage"
+    }
+  }
+}
