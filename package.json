@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "chmod a+x build.sh && ./build.sh Dockerfile.dev g4bridge:test",
-    "prod": "chmod a+x build.sh && ./build.sh Dockerfile g4bridge:latest"
+    "build": "chmod a+x build.sh && ./build.sh Dockerfile.dev eg4bridge:test",
+    "prod": "chmod a+x build.sh && ./build.sh Dockerfile eg4bridge:latest"
   },
   "nodemonConfig": {
     "ignore": [
