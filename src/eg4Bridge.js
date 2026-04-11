@@ -424,7 +424,7 @@ class EG4Bridge extends EventEmitter {
     const f_ac   = i16(30) / 100.0;
 
     const p_inv = i16(32);
-    const p_rec = i16(34);
+    const ac_charge_power = i16(34);
 
     const rms_current = i16(36) / 100.0;
     const pf = i16(38) / 1000.0;
@@ -455,7 +455,7 @@ class EG4Bridge extends EventEmitter {
 
     const pv_power = p_pv_1 + p_pv_2 + p_pv_3;
 
-    const home_live = grid_power_importing - p_rec + p_inv - p_to_grid;
+    const home_live = grid_power_importing - ac_charge_power + p_inv - p_to_grid;
     const home_day  = (grid_energy_daily - ac_charge_energy_daily + e_inv_day - e_to_grid_day);
 
     const status_text = INVERTER_STATES[status] || "Unknown"
@@ -467,6 +467,10 @@ class EG4Bridge extends EventEmitter {
     const load_energy_solar_daily = (pv_energy_daily > battery_energy_charge_solar_daily ) ? (pv_energy_daily - battery_energy_charge_solar_daily):0
     const load_energy_grid_daily = (grid_energy_daily > ac_charge_energy_daily) ? (grid_energy_daily - ac_charge_energy_daily):0
     const load_energy_daily = load_energy_solar_daily + load_energy_grid_daily
+
+    const grid_importing = (grid_power_importing > 100) ? "ON":"OFF"
+    const pv_power_charge = (grid_power_importing > 100) ? pv_power:((battery_power_charge > 0) ? (battery_power_charge - ac_charge_power):0)
+    const pv_power_load = ((pv_power - pv_power_charge) > 0) ? (pv_power - pv_power_charge):0
     // Emit raw + derived fields
     const payload = {
       status, status_text,
@@ -477,13 +481,13 @@ class EG4Bridge extends EventEmitter {
       pv_energy_daily, ac_charge_energy_daily,
       battery_energy_charge_daily, battery_energy_discharge_daily,
       grid_energy_daily, battery_energy_charge_solar_daily, load_energy_daily,
-      load_energy_solar_daily, load_energy_grid_daily,
+      load_energy_solar_daily, load_energy_grid_daily, pv_power_charge, pv_power_load, ac_charge_power,
       pv_current: (pv_voltage > 0) ? (Math.round((p_pv_1 / pv_voltage) * 100) / 100) : 0,
       grid_current: (grid_voltage > 0) ? (Math.round((grid_power_importing / grid_voltage) * 100) / 100) : 0,
       battery_current: (battery_voltage > 0) ? (Math.round((battery_power / battery_voltage) * 100) / 100) : 0,
       battery_charging: (battery_power_charge > 0) ? "ON":"OFF",
       battery_discharging: (battery_power_discharge > 50) ? "ON":"OFF",
-      grid_importing: (grid_power_importing > 100) ? "ON":"OFF",
+      grid_importing,
       grid_available: (grid_voltage > 100) ? "ON":"OFF",
       battery_energy_cost_daily: (Math.round((ac_charge_energy_daily * POWER_COST) * 100) / 100),
       grid_energy_cost_daily: (Math.round((grid_energy_daily * POWER_COST) * 100) / 100),

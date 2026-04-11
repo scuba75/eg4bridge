@@ -15,7 +15,6 @@
     "topic": "pv_energy_daily",
     "main": "both",
     "individual": true,
-    "cache": "daily",
     "config": {
       "state_class": "total",
       "unit_of_measurement": "kWh",
@@ -27,7 +26,28 @@
     "topic": "pv_power",
     "main": "both",
     "individual": true,
-    "cache": "minute",
+    "config": {
+      "state_class": "measurement",
+      "unit_of_measurement": "W",
+      "device_class": "power"
+    }
+  },
+  "pv_power_charge": {
+    "name": "PV Power Charge",
+    "topic": "pv_power_charge",
+    "main": "both",
+    "individual": true,
+    "config": {
+      "state_class": "measurement",
+      "unit_of_measurement": "W",
+      "device_class": "power"
+    }
+  },
+  "pv_power_load": {
+    "name": "PV Power Load",
+    "topic": "pv_power_load",
+    "main": "both",
+    "individual": true,
     "config": {
       "state_class": "measurement",
       "unit_of_measurement": "W",

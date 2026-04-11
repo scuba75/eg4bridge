@@ -4,7 +4,6 @@
     "topic": "load_energy_cost_daily",
     "main": "both",
     "individual": true,
-    "cache": "daily",
     "config": {
       "state_class": "total",
       "unit_of_measurement": "$",
@@ -18,7 +17,6 @@
     "topic": "load_energy_daily",
     "main": "both",
     "individual": true,
-    "cache": "daily",
     "config": {
       "state_class": "total",
       "unit_of_measurement": "kWh",
@@ -30,7 +28,6 @@
     "topic": "load_energy_solar_daily",
     "main": "both",
     "individual": true,
-    "cache": "daily",
     "config": {
       "state_class": "total",
       "unit_of_measurement": "kWh",
@@ -42,7 +39,6 @@
     "topic": "load_energy_grid_daily",
     "main": "both",
     "individual": true,
-    "cache": "daily",
     "config": {
       "state_class": "total",
       "unit_of_measurement": "kWh",
@@ -54,7 +50,6 @@
     "topic": "load_power",
     "main": "both",
     "individual": true,
-    "cache": "minute",
     "config": {
       "state_class": "measurement",
       "unit_of_measurement": "W",
