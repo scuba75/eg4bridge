@@ -2,7 +2,7 @@
 const log = require('./logger')
 const { dataList } = require('./dataList')
 const mqtt = require('./mqtt')
-const cache = require('./cache')
+const cache = require('./sqlite')
 const schedule = require('./schedule')
 
 const sensorConfig = require('./sensorConfig')
@@ -70,7 +70,7 @@ inverter1.on('hold_data', async(d)=>{
     let topic = sensorConfig[i]?.topic
     if(topic) mqtt.publish(`solar_inverter/main/${topic}/state`, decodedValue?.toString())
 
-    let desired = cache.get(i)
+    let desired = await cache.get(i)
     if(!desired?.raw){
       await cache.set(i, { raw: d.schedule[i].raw, decodedValue: decodedValue, register: d.schedule[i].register })
       desired = cache.get(i)
@@ -108,6 +108,7 @@ inverter2.on('data', (d)=>{
 })
 module.exports.start = ()=>{
   try{
+    log.info(`Starting Inverter(s) Bridge...`)
     if(INVERTER1_IP) inverter1.start()
     if(INVERTER2_IP) inverter2.start()
   }catch(e){

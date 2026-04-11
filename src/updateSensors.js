@@ -6,6 +6,7 @@ const sensorConfig = require('./sensorConfig')
 
 module.exports = (inverterNum, otherInverter, MASTER_INVERTER, data) =>{
   try{
+    let timeNow = Date.now()
     if(!inverterNum || !data || !MASTER_INVERTER) return;
 
     if(!dataList.main) dataList.main = {}
@@ -89,7 +90,9 @@ module.exports = (inverterNum, otherInverter, MASTER_INVERTER, data) =>{
         }
       }
     }
-    dataList.main.updated = Math.round((Date.now()) / 1000)
+
+    dataList.main.updated = Math.round(timeNow / 1000)
+    dataList.updated = timeNow
     if(dataList?.main?.updated) mqtt.publish('solar_inverter/main/updated/state', dataList.main.updated.toString())
   }catch(e){
     log.error(e)

@@ -15,6 +15,7 @@
     "topic": "pv_energy_daily",
     "main": "both",
     "individual": true,
+    "cache": "daily",
     "config": {
       "state_class": "total",
       "unit_of_measurement": "kWh",
@@ -26,6 +27,7 @@
     "topic": "pv_power",
     "main": "both",
     "individual": true,
+    "cache": "minute",
     "config": {
       "state_class": "measurement",
       "unit_of_measurement": "W",

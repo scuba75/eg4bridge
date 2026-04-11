@@ -24,6 +24,7 @@
   },
   "homepage": "https://github.com/scuba75/eg4bridge#readme",
   "dependencies": {
+    "better-sqlite3": "^12.8.0",
     "chalk": "^4.1.0",
     "express": "^5.2.1",
     "mqtt": "^5.15.1"

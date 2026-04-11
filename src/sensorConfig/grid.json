@@ -4,6 +4,7 @@
     "topic": "ac_charge_energy_daily",
     "main": "both",
     "individual": true,
+    "cache": "daily",
     "config": {
       "state_class": "total",
       "unit_of_measurement": "kWh",
@@ -37,10 +38,11 @@
     "topic": "Grid_energy_cost_daily",
     "main": "both",
     "individual": true,
+    "cache": "daily",
     "config": {
       "state_class": "total",
       "unit_of_measurement": "$",
-      "device_class": "monetary",      
+      "device_class": "monetary",
       "accuracy_decimals": 2,
       "value_template": "{{ float(value) | round(2) }}"
     }
@@ -50,6 +52,7 @@
     "topic": "grid_energy_daily",
     "main": "both",
     "individual": true,
+    "cache": "daily",
     "config": {
       "state_class": "total",
       "unit_of_measurement": "kWh",
@@ -61,6 +64,7 @@
     "topic": "grid_power_importing",
     "main": "both",
     "individual": true,
+    "cache": "minute",
     "config": {
       "state_class": "measurement",
       "unit_of_measurement": "W",

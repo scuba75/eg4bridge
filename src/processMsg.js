@@ -1,6 +1,6 @@
 'use strict'
 const log = require('./logger')
-const cache = require('./cache')
+const cache = require('./sqlite')
 const sensors = require('./sensorConfig/schedule.json')
 const schedule = require('./schedule')
 

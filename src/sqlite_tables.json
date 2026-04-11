@@ -1,0 +1,26 @@
+{
+  "cache": {
+    "name": "cache",
+    "schema": "CREATE TABLE IF NOT EXISTS cache(id TEXT PRIMARY KEY NOT NULL, data TEXT NOT NULL, ttl TEXT NOT NULL)",
+    "get": "SELECT * FROM cache WHERE id = ?",
+    "set": "INSERT INTO cache (id, data, ttl) VALUES(:id, :data, :ttl) ON CONFLICT(id) DO UPDATE SET data = :data, ttl = :ttl"
+  },
+  "daily": {
+    "name": "daily",
+    "schema": "CREATE TABLE IF NOT EXISTS daily(id TEXT PRIMARY KEY NOT NULL, data TEXT NOT NULL, ttl TEXT NOT NULL)",
+    "get": "SELECT * FROM daily WHERE id = ?",
+    "set": "INSERT INTO daily (id, data, ttl) VALUES(:id, :data, :ttl) ON CONFLICT(id) DO UPDATE SET data = :data, ttl = :ttl",
+    "all": "SELECT * FROM daily",
+    "expire": "DELETE FROM daily WHERE ttl < ?",
+    "ttl": 25920000
+  },
+  "minute": {
+    "name": "minute",
+    "schema": "CREATE TABLE IF NOT EXISTS minute(id TEXT PRIMARY KEY NOT NULL, data TEXT NOT NULL, ttl TEXT NOT NULL)",
+    "get": "SELECT * FROM minute WHERE id = ?",
+    "set": "INSERT INTO minute (id, data, ttl) VALUES(:id, :data, :ttl) ON CONFLICT(id) DO UPDATE SET data = :data, ttl = :ttl",
+    "all": "SELECT * FROM minute",
+    "expire": "DELETE FROM minute WHERE ttl < ?",
+    "ttl": 172800
+  }
+}
