@@ -4,8 +4,19 @@
     "topic": "battery_charging",
     "main": "master",
     "sensor_type": "binary_sensor",
+    "unit_of_measurement": "status",
     "config": {
       "device_class": "battery_charging"
+    }
+  },
+  "battery_charge_rate": {
+    "name": "Battery Charge Rate",
+    "topic": "battery_charge_rate",
+    "main": "master",
+    "sensor_type": "sensor",
+    "config": {
+      "unit_of_measurement": "%/hr",
+      "icon": "mdi:battery-charging-medium"
     }
   },
   "battery_current": {
@@ -35,7 +46,18 @@
     "topic": "battery_discharging",
     "main": "master",
     "sensor_type": "binary_sensor",
+    "unit_of_measurement": "status",
     "config": {
+      "icon": "mdi:battery-arrow-down"
+    }
+  },
+  "battery_discharge_rate": {
+    "name": "Battery Discharge Rate",
+    "topic": "battery_discharge_rate",
+    "main": "master",
+    "sensor_type": "sensor",
+    "config": {
+      "unit_of_measurement": "%/hr",
       "icon": "mdi:battery-arrow-down"
     }
   },
@@ -126,6 +148,26 @@
       "state_class": "measurement",
       "unit_of_measurement": "%",
       "device_class": "battery"
+    }
+  },
+  "battery_time_to_empty": {
+    "name": "Battery Time to Empty",
+    "topic": "battery_time_to_empty",
+    "main": "master",
+    "config": {
+      "state_class": "measurement",
+      "unit_of_measurement": "h",
+      "device_class": "duration"
+    }
+  },
+  "battery_time_to_full": {
+    "name": "Battery Time to Full",
+    "topic": "battery_time_to_full",
+    "main": "master",
+    "config": {
+      "state_class": "measurement",
+      "unit_of_measurement": "h",
+      "device_class": "duration"
     }
   },
   "battery_voltage": {

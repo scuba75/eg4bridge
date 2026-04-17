@@ -1,7 +1,7 @@
 'use strict'
 const mqtt = require('mqtt')
 const log = require('./logger')
-const processMsg = require('./processMsg')
+const processMsg = require('./process_msg')
 
 let connectMsg = false, status = false, client
 const MQTT_HOST = process.env.MQTT_HOST
@@ -67,10 +67,9 @@ module.exports.registerSensor = (topic, payload)=>{
   })
 }
 module.exports.sendSensorValue = (topic, value, retain = false)=>{
-  if(!status) return
-  if(!topic || !value) return
+  if(!status || !topic) return
   return new Promise((resolve, reject)=>{
-    client.publish(topic, value, { qos: 1, retain: retain }, (error)=>{
+    client.publish(topic, (value || 0)?.toString(), { qos: 1, retain: retain }, (error)=>{
       if(error) reject(error)
       resolve()
     })

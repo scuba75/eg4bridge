@@ -24,9 +24,12 @@
   },
   "homepage": "https://github.com/scuba75/eg4bridge#readme",
   "dependencies": {
+    "@influxdata/influxdb-client": "^1.35.0",
     "better-sqlite3": "^12.8.0",
     "chalk": "^4.1.0",
     "express": "^5.2.1",
-    "mqtt": "^5.15.1"
+    "json-array-sorter": "^0.0.5",
+    "mqtt": "^5.15.1",
+    "socket.io": "^4.8.3"
   }
 }

@@ -1,117 +1,110 @@
 'use strict'
 const log = require('./logger')
-const { dataList } = require('./dataList')
-const mqtt = require('./mqtt')
 const cache = require('./sqlite')
+const mqtt = require('./mqtt')
 const schedule = require('./schedule')
+const updateSensors = require('./update_sensors')
 
-const sensorConfig = require('./sensorConfig')
-const updateSensors = require('./updateSensors')
+const SYSTEM_CONFIGS = require('/app/data/config.json')
+const INVERTER_CONFIGS = SYSTEM_CONFIGS?.inverters
+const POWER_CONFIGS = SYSTEM_CONFIGS?.max_powers
+const SENSOR_CONFIGS = require('./sensor_configs')
 
-let INVERTER1_IP = process.env.INVERTER1_IP, INVERTER1_PORT = (process.env.INVERTER1_PORT || 8000), INVERTER1_DONGLE_SN = process.env.INVERTER1_DONGLE_SN, INVERTER1_SN = process.env.INVERTER1_SN
-let INVERTER2_IP = process.env.INVERTER2_IP, INVERTER2_PORT = (process.env.INVERTER2_PORT || 8000), INVERTER2_DONGLE_SN = process.env.INVERTER2_DONGLE_SN, INVERTER2_SN = process.env.INVERTER2_SN
+const { EG4Bridge } = require('./eg4_bridge');
+const { dataList } = require('./data_list')
 
-let INPUT_UPDATE_MS = +(process.env.INPUT_UPDATE_MS || 5000), HOLD_UPDATE_MS = +(process.env.HOLD_UPDATE_MS || 10000)
+let INPUT_UPDATE_MS = +(process.env.INPUT_UPDATE_MS || 5000), HOLD_UPDATE_MS = +(process.env.HOLD_UPDATE_MS || 10000), INVERTERS = {}, INVERTERS_STATUS
 
-let MASTER_INVERTER = 1
-
-const { EG4Bridge } = require('./eg4Bridge');
-
-const inverter1 = new EG4Bridge({
-  host: INVERTER1_IP,          // or leave blank and use scanDongle()
-  port: INVERTER1_PORT,
-  dongleSerial: INVERTER1_DONGLE_SN,    // 10 chars
-  inverterSerial: INVERTER1_SN,  // 10 chars
-  updateIntervalMs: INPUT_UPDATE_MS,
-  holdIntervalMs: HOLD_UPDATE_MS,
-});
-
-const inverter2 = new EG4Bridge({
-  host: INVERTER2_IP,          // or leave blank and use scanDongle()
-  port: INVERTER2_PORT,
-  dongleSerial: INVERTER2_DONGLE_SN,    // 10 chars
-  inverterSerial: INVERTER2_SN,  // 10 chars
-  updateIntervalMs: INPUT_UPDATE_MS,
-  holdIntervalMs: HOLD_UPDATE_MS,
-});
-
-inverter1.on('log', (e) => {
-  if(log[e?.level]){
-    log[e.level](`[inverter1] ${e.msg}`)
-  }else{
-    console.log(`[${e.level}][inverter1] ${e.msg}`)
-  }
-})
-inverter1.on('scan_status', (s) => log.error(`[scan][inverter1] ${s}`));
-
-inverter1.on('connected', () => log.info('Inverter 1 Connected!'));
-
-inverter1.on('data', (d)=>{
-  if(d?.master_slave == 1) MASTER_INVERTER = 1
-  for(let i in d) {
-    if(!i || (!d[i] && +(d[i] != 0))) continue;
-
-    if(!dataList["1"]) dataList["1"] = {}
-    dataList["1"][i] = d[i]
-  }
-  updateSensors(1, 2, MASTER_INVERTER, d)
-})
-inverter1.on('hold_data', async(d)=>{
-  if(!d?.schedule) return;
-  for(let i in d.schedule){
-    if(!i || !d.schedule[i]?.raw) continue
-
-    let decodedValue = schedule.decode(d.schedule[i].raw)
-    if(!decodedValue) continue;
-
-    if(!dataList.schedule) dataList.schedule = {}
-    dataList.schedule[i] = decodedValue
-
-    let topic = sensorConfig[i]?.topic
-    if(topic) mqtt.publish(`solar_inverter/main/${topic}/state`, decodedValue?.toString())
-
-    let desired = await cache.get(i)
-    if(!desired?.raw){
-      await cache.set(i, { raw: d.schedule[i].raw, decodedValue: decodedValue, register: d.schedule[i].register })
-      desired = cache.get(i)
-    }
-    if(desired?.decodedValue && topic){
-      let desired_topic = topic?.replace('_actual', '_desired')
-      if(!dataList.schedule) dataList.schedule = {}
-      dataList.schedule[desired_topic] = desired?.decodedValue
-      mqtt.publish(`solar_inverter/main/${desired_topic}/state`, desired?.decodedValue?.toString())
-    }
-    if(desired?.raw != d.schedule[i].raw && d.schedule[i].register > 0 && desired?.raw >= 0) inverter1.queueWrite(d.schedule[i].register, desired.raw)
-  }
-});
-
-inverter2.on('log', (e) => {
-  if(log[e?.level]){
-    log[e.level](`[inverter2] ${e.msg}`)
-  }else{
-    console.log(`[${e.level}][inverter2] ${e.msg}`)
-  }
-})
-inverter2.on('scan_status', (s) => log.error(`[scan][inverter2] ${s}`));
-
-inverter2.on('connected', () => log.info('Inverter 2 Connected!'));
-
-inverter2.on('data', (d)=>{
-  if(d?.master_slave == 1) MASTER_INVERTER = 2
-  for(let i in d) {
-    if(!i || (!d[i] && +(d[i]) != 0)) continue;
-
-    if(!dataList["2"]) dataList["2"] = {}
-    dataList["2"][i] = d[i]
-  }
-  updateSensors(2, 1, MASTER_INVERTER, d)
-})
-module.exports.start = ()=>{
+const init = ()=>{
   try{
-    log.info(`Starting Inverter(s) Bridge...`)
-    if(INVERTER1_IP) inverter1.start()
-    if(INVERTER2_IP) inverter2.start()
+    if(!INVERTER_CONFIGS || INVERTER_CONFIGS?.length == 0){
+      log.error(`Inverter Config not defined...`)
+      setTimeout(init, 5000)
+      return
+    }
+    for(let i in POWER_CONFIGS){
+      if(!i || !POWER_CONFIGS[i]) continue;
+      dataList.main[`${i}_max`] = POWER_CONFIGS[i]
+    }
+    for(let i in INVERTER_CONFIGS){
+      if(!i || !INVERTER_CONFIGS[i]?.host) continue
+      let inverter_num = +(+i +1);
+      INVERTERS[inverter_num] = new EG4Bridge({
+        ...INVERTER_CONFIGS[i],
+        inverter_num: inverter_num,
+        updateIntervalMs: INPUT_UPDATE_MS,
+        holdIntervalMs: HOLD_UPDATE_MS
+      })
+      dataList.inverters[inverter_num] = { serial: INVERTER_CONFIGS[i].inverterSerial, inverter_num: inverter_num }
+
+      INVERTERS[inverter_num].on('log', (e) => {
+        if(log[e?.level]){
+          log[e.level](`[inverter_${e.inverter_num}] ${e.msg}`)
+        }else{
+          console.log(`[${e.level}][inverter_${e.inverter_num}] ${e.msg}`)
+        }
+      })
+      INVERTERS[inverter_num].on('scan_status', (d) => log.error(`[inverter_${d.inverter_num}][scan] ${d.msg}`));
+
+      INVERTERS[inverter_num].on('connected', (d) => log.info(`Inverter ${d.inverter_num} Connected!`));
+
+      INVERTERS[inverter_num].on('data', (d)=>{
+        if(!d?.data || !d?.inverter_num) return
+        if(!dataList.inverters[d?.inverter_num]) return
+
+        updateSensors(d.inverter_num, d.data)
+      });
+      if(inverter_num == 1){
+        log.info(`Setting up hold_data reporting for Inverter ${inverter_num}...`)
+        INVERTERS[inverter_num].on('hold_data', async(d)=>{
+          if(!d?.data?.schedule) return;
+
+          for(let i in d.data.schedule){
+            if(!i || !d?.data?.schedule || !d?.data?.schedule[i] || !d.data.schedule[i]?.raw) continue
+
+            let decodedValue = schedule.decode(d.data.schedule[i].raw)
+            if(!decodedValue) continue;
+
+            if(!dataList.schedule) dataList.schedule = {}
+            dataList.schedule[i] = decodedValue
+
+            let topic = SENSOR_CONFIGS[i]?.topic
+            if(topic) mqtt.publish(`solar_inverter/main/${topic}/state`, decodedValue?.toString())
+
+            let desired = await cache.get(i)
+            if(!desired?.raw){
+              await cache.set(i, { raw: d.data.schedule[i].raw, decodedValue: decodedValue, register: d.data.schedule[i].register })
+              desired = cache.get(i)
+            }
+            if(desired?.decodedValue && topic){
+              let desired_topic = topic?.replace('_actual', '_desired')
+              if(!dataList.schedule) dataList.schedule = {}
+              dataList.schedule[desired_topic] = desired?.decodedValue
+              mqtt.publish(`solar_inverter/main/${desired_topic}/state`, desired?.decodedValue?.toString())
+            }
+            if(desired?.raw != d.data.schedule[i].raw && d.data.schedule[i].register > 0 && desired?.raw >= 0) INVERTERS[inverter_num].queueWrite(d.data.schedule[i].register, desired.raw)
+          }
+        });
+      }
+    }
+    INVERTERS_STATUS = true
+  }catch(e){
+    setTimeout(init, 5000)
+    log.error(e)
+  }
+}
+init()
+module.exports.start = () =>{
+  try{
+    for(let i in INVERTERS){
+      if(!INVERTERS[i]) continue
+      INVERTERS[i].start()
+    }
+    return true
   }catch(e){
     log.error(e)
   }
+}
+module.exports.status = ()=>{
+  return INVERTERS_STATUS
 }

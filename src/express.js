@@ -2,14 +2,15 @@
 const log = require('./logger')
 const express = require('express')
 const cache = require('./sqlite')
-const { dataList } = require('./dataList')
+const { dataList } = require('./data_list')
+const sorter = require('json-array-sorter')
 
 const PORT = process.env.PORT || 3000
 
 const app = express()
 
 const server = app.listen(PORT, ()=>{
-  log.info(`eg4bridge is listening on ${server.address().port}`)
+  log.info(`eg4-bridge is listening on ${server.address().port}`)
 })
 
 app.get('/data', (req, res)=>{
@@ -20,12 +21,15 @@ app.get('/data', (req, res)=>{
   }
 
 })
+/*
 app.get('/stats', async(req, res)=>{
   try{
     let data = {}
     data.daily = await cache.all('daily')
     data.minute = await cache.all('minute')
     if(data?.daily && data.minute){
+      data.daily = sorter([{ column: 'updated', order: 'ascending' }], data.daily)
+      data.minute = sorter([{ column: 'updated', order: 'ascending' }], data.minute)
       res.json(data)
     }else{
       res.sendStatus(400)
@@ -35,3 +39,4 @@ app.get('/stats', async(req, res)=>{
     log.error(e)
   }
 })
+*/

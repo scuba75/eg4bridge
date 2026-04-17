@@ -13,14 +13,5 @@
     "all": "SELECT * FROM daily",
     "expire": "DELETE FROM daily WHERE ttl < ?",
     "ttl": 25920000
-  },
-  "minute": {
-    "name": "minute",
-    "schema": "CREATE TABLE IF NOT EXISTS minute(id TEXT PRIMARY KEY NOT NULL, data TEXT NOT NULL, ttl INT NOT NULL)",
-    "get": "SELECT * FROM minute WHERE id = ?",
-    "set": "INSERT INTO minute (id, data, ttl) VALUES(:id, :data, :ttl) ON CONFLICT(id) DO UPDATE SET data = :data, ttl = :ttl",
-    "all": "SELECT * FROM minute",
-    "expire": "DELETE FROM minute WHERE ttl < ?",
-    "ttl": 172800
   }
 }

@@ -2,12 +2,11 @@
 const log = require('./logger')
 //log.setLevel('debug');
 const mqtt = require('./mqtt')
-const createSensors = require('./createSensors')
+const createSensors = require('./create_sensors')
 const cache = require('./sqlite')
 
 const inverters = require('./inverters')
 require('./express')
-
 
 const MQTT_HOST = process.env.MQTT_HOST
 
@@ -20,7 +19,7 @@ const checkCache = ()=>{
     }
     if(status && !MQTT_HOST){
       log.info(`Skipping MQTT check, MQTT_HOST not provided...`)
-      inverters.start()
+      startInverters()
       return
     }
     setTimeout(checkCache, 5000)
@@ -34,13 +33,26 @@ const checkMqtt = async()=>{
     let status = mqtt.status()
     if(status) status = await createSensors()
     if(status){
-      inverters.start()
+      startInverters()
       return
     }
     setTimeout(checkMqtt, 5000)
   }catch(e){
     log.error(e)
     setTimeout(checkMqtt, 5000)
+  }
+}
+const startInverters = async()=>{
+  try{
+    let status = inverters.status()
+    if(status){
+      inverters.start()
+      return
+    }
+    setTimeout(startInverters, 5000)
+  }catch(e){
+    setTimeout(startInverters, 5000)
+    log.error(e)
   }
 }
 checkCache()

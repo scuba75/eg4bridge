@@ -9,6 +9,9 @@ const INVERTER_STATES = require('./inverter_states.json')
 const WARNING_CODES = require('./warning_codes.json')
 const FAULT_CODES = require('./fault_codes.json')
 const POWER_COST = parseFloat(process.env.POWER_COST || "0.1044288425047438")
+const roundValue = (value, decimal_places)=>{
+  return parseFloat((value || 0)?.toFixed(decimal_places || 2))
+}
 class EG4Bridge extends EventEmitter {
   // Protocol constants
   static LUX_TCP_TRANSLATED_DATA = 0xC2;
@@ -29,6 +32,8 @@ class EG4Bridge extends EventEmitter {
 
     this.updateIntervalMs = options.updateIntervalMs ?? 20000;
     this.holdIntervalMs   = options.holdIntervalMs ?? 60000;
+
+    this.inverter_num = +(options.inverter_num || 1)
 
     // ---- State machine ----
     this.State = {
@@ -99,7 +104,7 @@ class EG4Bridge extends EventEmitter {
   }
 
   reconnect() {
-    this.emit('log', { level: 'info', msg: 'reconnect() called – closing socket and resetting state' });
+    this.emit('log', { inverter_num: this.inverter_num, level: 'info', msg: 'reconnect() called – closing socket and resetting state' });
     this.closeSocket();
     this.lastConnectMs = 0;
     this.initialHoldDone = false;
@@ -107,11 +112,11 @@ class EG4Bridge extends EventEmitter {
 
   queueWrite(reg, value) {
     if (this.writeQueue.length >= this.WRITE_QUEUE_MAX) {
-      this.emit('log', { level: 'warn', msg: `queueWrite: queue full (${this.WRITE_QUEUE_MAX}), dropping reg=${reg} value=${value}` });
+      this.emit('log', { inverter_num: this.inverter_num, level: 'warn', msg: `queueWrite: queue full (${this.WRITE_QUEUE_MAX}), dropping reg=${reg} value=${value}` });
       return false;
     }
     this.writeQueue.push({ reg: reg & 0xFFFF, value: value & 0xFFFF });
-    this.emit('log', { level: 'debug', msg: `queueWrite reg=${reg} value=${value} depth=${this.writeQueue.length}` });
+    this.emit('log', { inverter_num: this.inverter_num, level: 'debug', msg: `queueWrite reg=${reg} value=${value} depth=${this.writeQueue.length}` });
     return true;
   }
 
@@ -143,33 +148,33 @@ class EG4Bridge extends EventEmitter {
         this.connected = true;
         this._connecting = false;
         this.state = this.State.IDLE;
-        this.emit('log', { level: 'info', msg: `Connected to ${this.host}:${this.port}` });
-        this.emit('connected');
+        this.emit('log', { inverter_num: this.inverter_num, level: 'info', msg: `Connected to ${this.host}:${this.port}` });
+        this.emit('connected', { inverter_num: this.inverter_num });
       });
 
       sock.on('data', (chunk) => {
         // Append to recv buffer, cap to avoid runaway memory if protocol breaks
         this.recvBuf = Buffer.concat([this.recvBuf, chunk]);
         if (this.recvBuf.length > this.RECV_MAX) {
-          this.emit('log', { level: 'warn', msg: `Receive buffer overflow (${this.recvBuf.length}), discarding` });
+          this.emit('log', { inverter_num: this.inverter_num, level: 'warn', msg: `Receive buffer overflow (${this.recvBuf.length}), discarding` });
           this.recvBuf = Buffer.alloc(0);
         }
       });
 
       sock.on('close', () => {
-        this.emit('log', { level: 'warn', msg: 'Connection closed' });
+        this.emit('log', { inverter_num: this.inverter_num, level: 'warn', msg: 'Connection closed' });
         this.closeSocket();
       });
 
       sock.on('error', (err) => {
-        this.emit('log', { level: 'warn', msg: `Socket error: ${err.message}` });
+        this.emit('log', { inverter_num: this.inverter_num, level: 'warn', msg: `Socket error: ${err.message}` });
         this.closeSocket();
       });
 
       this.socket = sock;
       sock.connect(this.port, ip);
     } catch (e) {
-      this.emit('log', { level: 'error', msg: `Connect failed: ${e.message}` });
+      this.emit('log', { inverter_num: this.inverter_num, level: 'error', msg: `Connect failed: ${e.message}` });
       this.closeSocket();
     }
   }
@@ -193,7 +198,7 @@ class EG4Bridge extends EventEmitter {
       this.socket.write(buf);
       return true;
     } catch (e) {
-      this.emit('log', { level: 'warn', msg: `send failed: ${e.message}` });
+      this.emit('log', { inverter_num: this.inverter_num, level: 'warn', msg: `send failed: ${e.message}` });
       this.closeSocket();
       return false;
     }
@@ -226,7 +231,7 @@ class EG4Bridge extends EventEmitter {
     const frameLen = b.readUInt16LE(4);
     const total = frameLen + 6;
     if (total > this.RECV_MAX) {
-      this.emit('log', { level: 'error', msg: `Packet too large (${total}), discarding buffer` });
+      this.emit('log', { inverter_num: this.inverter_num, level: 'error', msg: `Packet too large (${total}), discarding buffer` });
       this.recvBuf = Buffer.alloc(0);
       return false;
     }
@@ -245,13 +250,13 @@ class EG4Bridge extends EventEmitter {
     const tcpFn = pkt[7];
 
     if (tcpFn === EG4Bridge.LUX_TCP_HEARTBEAT) {
-      this.emit('log', { level: 'debug', msg: 'Heartbeat – echoing back' });
+      this.emit('log', { inverter_num: this.inverter_num, level: 'debug', msg: 'Heartbeat – echoing back' });
       this.sendBytes(pkt);
       return;
     }
 
     if (tcpFn !== EG4Bridge.LUX_TCP_TRANSLATED_DATA) {
-      this.emit('log', { level: 'debug', msg: `Unknown tcp_function 0x${tcpFn.toString(16)}` });
+      this.emit('log', { inverter_num: this.inverter_num, level: 'debug', msg: `Unknown tcp_function 0x${tcpFn.toString(16)}` });
       return;
     }
 
@@ -263,7 +268,7 @@ class EG4Bridge extends EventEmitter {
     const crcCalc = crc16Modbus(df);
 
     if (crcCalc !== crcRecv) {
-      this.emit('log', { level: 'error', msg: `CRC mismatch calc=0x${crcCalc.toString(16)} recv=0x${crcRecv.toString(16)}` });
+      this.emit('log', { inverter_num: this.inverter_num, level: 'error', msg: `CRC mismatch calc=0x${crcCalc.toString(16)} recv=0x${crcRecv.toString(16)}` });
       return;
     }
 
@@ -302,7 +307,7 @@ class EG4Bridge extends EventEmitter {
       return;
     }
 
-    this.emit('log', { level: 'debug', msg: `Unhandled device_function 0x${devFn.toString(16)}` });
+    this.emit('log', { inverter_num: this.inverter_num, level: 'debug', msg: `Unhandled device_function 0x${devFn.toString(16)}` });
   }
 
   processReadHold(startReg, data) {
@@ -326,7 +331,7 @@ class EG4Bridge extends EventEmitter {
       }
     }
 
-    this.emit('log', { level: 'debug', msg: `READ_HOLD reg=${startReg} count=${count} cached (${changed.length} changed)` });
+    this.emit('log', { inverter_num: this.inverter_num, level: 'debug', msg: `READ_HOLD reg=${startReg} count=${count} cached (${changed.length} changed)` });
 
     // Emit bank-level event for anyone who wants "bank complete" info
     this.emit('hold_bank', {
@@ -338,7 +343,7 @@ class EG4Bridge extends EventEmitter {
   }
 
   processWriteSingle(reg, value) {
-    this.emit('log', { level: 'info', msg: `WRITE_SINGLE confirmed reg=${reg} value=${value}` });
+    this.emit('log', { inverter_num: this.inverter_num, level: 'info', msg: `WRITE_SINGLE confirmed reg=${reg} value=${value}` });
     if (reg < 240) {
       this.holdRegs[reg] = value;
       this.emit('hold_updated', this.holdRegs);
@@ -349,6 +354,7 @@ class EG4Bridge extends EventEmitter {
   processReadInput(startReg, data) {
     if (data.length < 80) {
       this.emit('log', {
+        inverter_num: this.inverter_num,
         level: 'warn',
         msg: `READ_INPUT start=${startReg} too small (${data.length})`
       });
@@ -373,6 +379,7 @@ class EG4Bridge extends EventEmitter {
     }
 
     this.emit('log', {
+      inverter_num: this.inverter_num,
       level: 'warn',
       msg: `Unknown INPUT bank start_reg=${startReg}`
     });
@@ -390,7 +397,7 @@ class EG4Bridge extends EventEmitter {
       }
     };
 
-    this.emit('hold_data', derived);
+    this.emit('hold_data', { inverter_num: this.inverter_num, data: derived });
   }
   // --------------------------
   // Bank decoders (little-endian)
@@ -402,7 +409,7 @@ class EG4Bridge extends EventEmitter {
     const i16 = (o) => buf.readInt16LE(o);
 
     const status = u16(0);
-    const pv_voltage = i16(2)  / 10.0;
+    const pv_voltage = (i16(2)  / 10.0);
     const v_pv_2 = i16(4)  / 10.0;
     const v_pv_3 = i16(6)  / 10.0;
     const battery_voltage  = i16(8)  / 10.0;
@@ -453,48 +460,49 @@ class EG4Bridge extends EventEmitter {
     const v_bus_1 = i16(76) / 10.0;
     const v_bus_2 = i16(78) / 10.0;
 
-    const pv_power = p_pv_1 + p_pv_2 + p_pv_3;
+    const pv_power = +(p_pv_1 + p_pv_2 + p_pv_3);
 
     const home_live = grid_power_importing - ac_charge_power + p_inv - p_to_grid;
     const home_day  = (grid_energy_daily - ac_charge_energy_daily + e_inv_day - e_to_grid_day);
 
     const status_text = INVERTER_STATES[status] || "Unknown"
 
-    const battery_power = (battery_power_discharge > 0) ? -battery_power_discharge : battery_power_charge
+    const battery_power = (battery_power_discharge > 0) ? -(+battery_power_discharge) : +battery_power_charge
 
-    const battery_energy_charge_solar_daily = battery_energy_charge_daily - ac_charge_energy_daily
+    const battery_energy_charge_solar_daily = roundValue(battery_energy_charge_daily - ac_charge_energy_daily)
 
-    const load_energy_solar_daily = (pv_energy_daily > battery_energy_charge_solar_daily ) ? (pv_energy_daily - battery_energy_charge_solar_daily):0
-    const load_energy_grid_daily = (grid_energy_daily > ac_charge_energy_daily) ? (grid_energy_daily - ac_charge_energy_daily):0
+    const load_energy_solar_daily = roundValue(((pv_energy_daily > battery_energy_charge_solar_daily ) ? (pv_energy_daily - battery_energy_charge_solar_daily):0))
+    const load_energy_grid_daily = roundValue(((grid_energy_daily > ac_charge_energy_daily) ? (grid_energy_daily - ac_charge_energy_daily):0))
     const load_energy_daily = load_energy_solar_daily + load_energy_grid_daily
 
     const grid_importing = (grid_power_importing > 100) ? "ON":"OFF"
-    const pv_power_charge = (grid_power_importing > 100) ? pv_power:((battery_power_charge > 0) ? (battery_power_charge - ac_charge_power):0)
-    const pv_power_load = ((pv_power - pv_power_charge) > 0) ? (pv_power - pv_power_charge):0
+    const pv_power_charge = +((grid_power_importing > 100) ? pv_power:((battery_power_charge > 0) ? (battery_power_charge - ac_charge_power):0))
+    const pv_power_load = +(((pv_power - pv_power_charge) > 0) ? (pv_power - pv_power_charge):0)
     // Emit raw + derived fields
     const payload = {
       status, status_text,
-      pv_voltage, battery_voltage,
-      battery_soc, pv_power, battery_power,
-      battery_power_charge, battery_power_discharge,
-      grid_voltage, grid_power_importing,
-      pv_energy_daily, ac_charge_energy_daily,
-      battery_energy_charge_daily, battery_energy_discharge_daily,
-      grid_energy_daily, battery_energy_charge_solar_daily, load_energy_daily,
-      load_energy_solar_daily, load_energy_grid_daily, pv_power_charge, pv_power_load, ac_charge_power,
-      pv_current: (pv_voltage > 0) ? (Math.round((p_pv_1 / pv_voltage) * 100) / 100) : 0,
-      grid_current: (grid_voltage > 0) ? (Math.round((grid_power_importing / grid_voltage) * 100) / 100) : 0,
-      battery_current: (battery_voltage > 0) ? (Math.round((battery_power / battery_voltage) * 100) / 100) : 0,
+      pv_voltage: roundValue(pv_voltage, 1), battery_voltage: roundValue(battery_voltage, 1), battery_soc: +battery_soc,
+      pv_power, battery_power,
+      battery_power_charge: +battery_power_charge, battery_power_discharge: +battery_power_discharge,
+      grid_voltage: roundValue(grid_voltage, 1), grid_power_importing,
+      pv_energy_daily: roundValue(pv_energy_daily), ac_charge_energy_daily: roundValue(ac_charge_energy_daily),
+      battery_energy_charge_daily: roundValue(battery_energy_charge_daily), battery_energy_discharge_daily: roundValue(battery_energy_discharge_daily),
+      grid_energy_daily: roundValue(grid_energy_daily),
+      battery_energy_charge_solar_daily, load_energy_daily, load_energy_solar_daily, load_energy_grid_daily,
+      pv_power_charge, pv_power_load, ac_charge_power: +ac_charge_power,
+      pv_current: roundValue(((pv_voltage > 0) ? (p_pv_1 / pv_voltage) : 0)),
+      grid_current: roundValue(((grid_voltage > 0) ? (grid_power_importing / grid_voltage) : 0)),
+      battery_current: roundValue(((battery_voltage > 0) ? (battery_power / battery_voltage) : 0)),
       battery_charging: (battery_power_charge > 0) ? "ON":"OFF",
       battery_discharging: (battery_power_discharge > 50) ? "ON":"OFF",
       grid_importing,
       grid_available: (grid_voltage > 100) ? "ON":"OFF",
-      battery_energy_cost_daily: (Math.round((ac_charge_energy_daily * POWER_COST) * 100) / 100),
-      grid_energy_cost_daily: (Math.round((grid_energy_daily * POWER_COST) * 100) / 100),
-      load_energy_cost_daily: (Math.round((load_energy_grid_daily * POWER_COST) * 100) / 100)
+      battery_energy_cost_daily: roundValue(ac_charge_energy_daily * POWER_COST),
+      grid_energy_cost_daily: roundValue(grid_energy_daily * POWER_COST),
+      load_energy_cost_daily: roundValue(load_energy_grid_daily * POWER_COST)
     };
 
-    this.emit('data', payload);
+    this.emit('data', { inverter_num: this.inverter_num, data: payload });
   }
 
   processBank1(buf) {
@@ -528,9 +536,12 @@ class EG4Bridge extends EventEmitter {
     const home_total = (e_to_user_all - e_rec_all + e_inv_all - e_to_grid_all);
 
     this.emit('data', {
-      active_fault, active_warning, temperature,
-      active_fault_text: FAULT_CODES[active_fault] || 'Unknown',
-      active_warning_text: WARNING_CODES[active_warning] || 'Unknown'
+        inverter_num: this.inverter_num,
+        data: {
+          active_fault, active_warning, temperature: roundValue(temperature, 1),
+          active_fault_text: FAULT_CODES[active_fault] || 'Unknown',
+          active_warning_text: WARNING_CODES[active_warning] || 'Unknown'
+        }
     });
   }
 
@@ -545,7 +556,7 @@ class EG4Bridge extends EventEmitter {
 
     const bat_status_inv = i16(30);
     const bat_count = i16(32);
-    const bat_capacity = i16(34);
+    const battery_capacity = i16(34);
 
     const bat_current = i16(36) / 10.0;
 
@@ -581,8 +592,11 @@ class EG4Bridge extends EventEmitter {
     const bs = (bat_status_inv >= 0 && bat_status_inv < 17) ? bat_status_inv : 16;
 
     this.emit('data', {
-      battery_cycle_count, master_slave,
-      battery_cycle_count, role
+      inverter_num: this.inverter_num,
+      data: {
+        battery_cycle_count: +(battery_cycle_count || 0), master_slave,
+        role, battery_capacity: +battery_capacity
+      }
     });
   }
 
@@ -614,7 +628,12 @@ class EG4Bridge extends EventEmitter {
     const eload_day    = i16(22) / 10.0;
     const e_load_all_l  = i16(24) / 10.0;
 
-    this.emit('data', { load_power });
+    this.emit('data', {
+      inverter_num: this.inverter_num,
+      data: {
+        load_power
+      }
+    });
   }
 
   // --------------------------
@@ -652,7 +671,7 @@ class EG4Bridge extends EventEmitter {
     const crc = crc16Modbus(df.subarray(0, 16));
     pkt.writeUInt16LE(crc, 20 + 16);
 
-    this.emit('log', { level: 'debug', msg: `READ_INPUT reg=${startReg} count=${count}` });
+    this.emit('log', { inverter_num: this.inverter_num, level: 'debug', msg: `READ_INPUT reg=${startReg} count=${count}` });
     this.sendBytes(pkt);
   }
 
@@ -670,7 +689,7 @@ class EG4Bridge extends EventEmitter {
     const crc = crc16Modbus(df.subarray(0, 16));
     pkt.writeUInt16LE(crc, 20 + 16);
 
-    this.emit('log', { level: 'debug', msg: `READ_HOLD reg=${startReg} count=${count}` });
+    this.emit('log', { inverter_num: this.inverter_num, level: 'debug', msg: `READ_HOLD reg=${startReg} count=${count}` });
     this.sendBytes(pkt);
   }
 
@@ -688,7 +707,7 @@ class EG4Bridge extends EventEmitter {
     const crc = crc16Modbus(df.subarray(0, 16));
     pkt.writeUInt16LE(crc, 20 + 16);
 
-    this.emit('log', { level: 'info', msg: `WRITE_SINGLE reg=${reg} value=${value}` });
+    this.emit('log', { inverter_num: this.inverter_num, level: 'info', msg: `WRITE_SINGLE reg=${reg} value=${value}` });
     this.sendBytes(pkt);
   }
 
@@ -698,7 +717,7 @@ class EG4Bridge extends EventEmitter {
     // Watchdog for scanning
     if (this.scanning && (now - this.scanStartMs > this.SCAN_TIMEOUT_MS)) {
       this.scanning = false;
-      this.emit('scan_status', 'Error: scan timeout');
+      this.emit('scan_status', { inverter_num: this.inverter_num, msg: 'Error: scan timeout' });
     }
 
     // Skip normal polling during scan
@@ -708,7 +727,7 @@ class EG4Bridge extends EventEmitter {
     if (!this.isConfigReady()) {
       if (now - this.lastConnectMs >= 10000) {
         this.lastConnectMs = now;
-        this.emit('log', { level: 'warn', msg: 'Config incomplete – waiting for host/dongle/inverter serial' });
+        this.emit('log', { inverter_num: this.inverter_num, level: 'warn', msg: 'Config incomplete – waiting for host/dongle/inverter serial' });
       }
       return;
     }
@@ -717,7 +736,7 @@ class EG4Bridge extends EventEmitter {
     if (this.state === this.State.DISCONNECTED) {
       if (now - this.lastConnectMs >= 10000) {
         this.lastConnectMs = now;
-        this.emit('log', { level: 'info', msg: `Connecting to ${this.host}:${this.port}…` });
+        this.emit('log', { inverter_num: this.inverter_num, level: 'info', msg: `Connecting to ${this.host}:${this.port}…` });
         this.startConnect();
       }
       return;
@@ -728,7 +747,7 @@ class EG4Bridge extends EventEmitter {
       // Node socket will flip to connected via events
       // timeout handled here:
       if (this._connecting && now - this.lastConnectMs > 10000) {
-        this.emit('log', { level: 'warn', msg: 'Connect timed out' });
+        this.emit('log', { inverter_num: this.inverter_num, level: 'warn', msg: 'Connect timed out' });
         this.closeSocket();
       }
       return;
@@ -739,7 +758,7 @@ class EG4Bridge extends EventEmitter {
 
     // Response timeout guard
     if (this.awaiting && (now - this.reqSentMs > this.RESPONSE_TIMEOUT_MS)) {
-      this.emit('log', { level: 'warn', msg: `Response timeout (bank ${this.bankIdx})` });
+      this.emit('log', { inverter_num: this.inverter_num, level: 'warn', msg: `Response timeout (bank ${this.bankIdx})` });
       this.awaiting = false;
       this.bankIdx++;
 
@@ -789,7 +808,7 @@ class EG4Bridge extends EventEmitter {
           this.awaiting = true;
           this.reqSentMs = now;
         } else {
-          this.emit('log', { level: 'debug', msg: 'Input poll cycle complete.' });
+          this.emit('log', { inverter_num: this.inverter_num, level: 'debug', msg: 'Input poll cycle complete.' });
           this.state = this.State.IDLE;
         }
         break;
@@ -801,7 +820,7 @@ class EG4Bridge extends EventEmitter {
           this.awaiting = true;
           this.reqSentMs = now;
         } else {
-          this.emit('log', { level: 'debug', msg: 'Hold poll cycle complete.' });
+          this.emit('log', { inverter_num: this.inverter_num, level: 'debug', msg: 'Hold poll cycle complete.' });
           this.initialHoldDone = true;
           this.lastHoldPollMs = now;
           this.processHoldDerived();

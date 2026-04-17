@@ -1,10 +1,11 @@
-let dataList = { "1": { "serial": process.env.INVERTER1_SN }, "2": { "serial": process.env.INVERTER2_SN } }
+let dataList = { inverters:{}, main: {}, schedule: {} }
 const log = require('./logger')
+
 const cache = require('./sqlite')
 
 const SYNC_INTERVAL = (process.env.SYNC_INTERVAL_SECONDS || 20)
 
-function zonedTimestamp(timeZone = "America/New_York") {
+function zonedTimestamp(timeStamp, timeZone = "America/New_York") {
   const parts = Object.fromEntries(
     new Intl.DateTimeFormat("en-US", {
       timeZone,
@@ -16,19 +17,23 @@ function zonedTimestamp(timeZone = "America/New_York") {
       second: "2-digit",
       hour12: false,
     })
-      .formatToParts(new Date())
+      .formatToParts(new Date(timeStamp || Date.now()))
       .map(p => [p.type, p.value])
   );
-  return { date: `${parts.year}-${parts.month}-${parts.day}`, time: `${parts.hour}:${parts.minute}` }
+  let s_part = (parts.second < 30) ? "00":"30"
+  let h_part = (parts.hour < 24) ? parts.hour:"00"
+  return { date: `${parts.year}-${parts.month}-${parts.day}`, time: `${h_part}:${parts.minute}:${s_part}`, month: parts.month, day: parts.day,  year: parts.year }
 }
 const saveData = async()=>{
   try{
-    let data = JSON.parse(JSON.stringify(dataList)), key = zonedTimestamp()
-    if(!data?.main || !key?.date || !key?.time) return
+    let data = JSON.parse(JSON.stringify(dataList))
+    if(!data?.updated) return
+
+    let key = zonedTimestamp(data.updated)
+    if(!key?.date || !key?.time) return
 
     let payload = {...key, ...data}
     await cache.set(key.date, payload, 'daily')
-    await cache.set(`${key.date}_${key.time}`, payload, 'minute')
   }catch(e){
     log.error(e)
   }

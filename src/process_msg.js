@@ -1,7 +1,7 @@
 'use strict'
 const log = require('./logger')
 const cache = require('./sqlite')
-const sensors = require('./sensorConfig/schedule.json')
+const sensors = require('./sensor_configs/schedule.json')
 const schedule = require('./schedule')
 
 module.exports = (topic, msg)=>{

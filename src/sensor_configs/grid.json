@@ -26,6 +26,7 @@
     "topic": "grid_available",
     "main": "master",
     "sensor_type": "binary_sensor",
+    "unit_of_measurement": "status",
     "config": {
       "device_class": "connectivity",
       "icon": "mdi:transmission-tower"
@@ -45,7 +46,7 @@
   },
   "grid_energy_cost_daily": {
     "name": "Grid Energy Cost (Daily)",
-    "topic": "Grid_energy_cost_daily",
+    "topic": "grid_energy_cost_daily",
     "main": "both",
     "individual": true,
     "config": {
@@ -83,6 +84,7 @@
     "topic": "grid_importing",
     "main": "master",
     "sensor_type": "binary_sensor",
+    "unit_of_measurement": "status",
     "config": {
       "icon": "mdi:transmission-tower-import"
     }
