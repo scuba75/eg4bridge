@@ -396,8 +396,12 @@ class EG4Bridge extends EventEmitter {
         grid_first_end: { raw: this.holdRegs[153], register: 153}
       }
     };
-
+    const ac_charge = {
+      battery_charge_soc_start: this.holdRegs[160],
+      battery_charge_soc_end: this.holdRegs[161]
+    }
     this.emit('hold_data', { inverter_num: this.inverter_num, data: derived });
+    this.emit('data', { inverter_num: this.inverter_num, data: ac_charge });
   }
   // --------------------------
   // Bank decoders (little-endian)

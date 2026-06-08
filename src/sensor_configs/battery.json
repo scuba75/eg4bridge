@@ -19,6 +19,26 @@
       "icon": "mdi:battery-charging-medium"
     }
   },
+  "battery_charge_soc_start": {
+    "name": "Battery Charge SOC Start",
+    "topic": "battery_charge_soc_start",
+    "main": "master",
+    "config": {
+      "state_class": "measurement",
+      "unit_of_measurement": "%",
+      "device_class": "battery"
+    }
+  },
+  "battery_charge_soc_end": {
+    "name": "Battery Charge SOC End",
+    "topic": "battery_charge_soc_end",
+    "main": "master",
+    "config": {
+      "state_class": "measurement",
+      "unit_of_measurement": "%",
+      "device_class": "battery"
+    }
+  },
   "battery_current": {
     "name": "Battery Current",
     "topic": "battery_current",
@@ -160,6 +180,25 @@
       "device_class": "duration"
     }
   },
+  "battery_time_to_charge_soc": {
+    "name": "Battery Time to Charge SOC",
+    "topic": "battery_time_to_charge_soc",
+    "main": "master",
+    "config": {
+      "state_class": "measurement",
+      "unit_of_measurement": "h",
+      "device_class": "duration"
+    }
+  },
+  "battery_estimated_charge_soc": {
+    "name": "Battery Charge SOC Time",
+    "topic": "battery_estimated_charge_soc",
+    "main": "master",
+    "unit_of_measurement": "status",
+    "config": {
+      "icon": "mdi:clock"
+    }
+  },
   "battery_time_to_full": {
     "name": "Battery Time to Full",
     "topic": "battery_time_to_full",
@@ -168,6 +207,24 @@
       "state_class": "measurement",
       "unit_of_measurement": "h",
       "device_class": "duration"
+    }
+  },
+  "battery_estimated_full": {
+    "name": "Battery Full Time",
+    "topic": "battery_estimated_full",
+    "main": "master",
+    "unit_of_measurement": "status",
+    "config": {
+      "icon": "mdi:clock"
+    }
+  },
+  "battery_estimated_empty": {
+    "name": "Battery Empty Time",
+    "topic": "battery_estimated_empty",
+    "main": "master",
+    "unit_of_measurement": "status",
+    "config": {
+      "icon": "mdi:clock"
     }
   },
   "battery_voltage": {

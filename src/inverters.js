@@ -57,8 +57,8 @@ const init = ()=>{
       if(inverter_num == 1){
         log.info(`Setting up hold_data reporting for Inverter ${inverter_num}...`)
         INVERTERS[inverter_num].on('hold_data', async(d)=>{
-          if(!d?.data?.schedule) return;
 
+          if(!d?.data?.schedule) return;
           for(let i in d.data.schedule){
             if(!i || !d?.data?.schedule || !d?.data?.schedule[i] || !d.data.schedule[i]?.raw) continue
 
