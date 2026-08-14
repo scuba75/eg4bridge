@@ -606,6 +606,7 @@ class EG4Bridge extends EventEmitter {
 
   processBank3(buf) {
     const i16 = (o) => buf.readInt16LE(o);
+    const u16 = (o) => buf.readUInt16LE(o);
 
     const gen_input_volt = i16(2) / 10.0;
     const gen_input_freq = i16(4) / 100.0;
@@ -619,11 +620,11 @@ class EG4Bridge extends EventEmitter {
     const eps_L2_volt = i16(16) / 10.0;
     const eps_L1_watt = i16(18);
     const eps_L2_watt = i16(20);
-    /*
+    const ac_couple_pwr = (buf.length >= 68) ? u16(66) : null;
     this.emit('data', {
-
+      inverter_num: this.inverter_num,
+      data: { ac_couple_pwr }
     });
-    */
   }
 
   processBank4(buf) {

@@ -32,6 +32,17 @@
       "device_class": "power"
     }
   },
+  "ac_couple_pwr": {
+    "name": "PV Power (AC)",
+    "topic": "ac_couple_pwr",
+    "main": "both",
+    "individual": true,
+    "config": {
+      "state_class": "measurement",
+      "unit_of_measurement": "W",
+      "device_class": "power"
+    }
+  },
   "pv_power_charge": {
     "name": "PV Power Charge",
     "topic": "pv_power_charge",
