@@ -34,6 +34,17 @@
       "device_class": "energy"
     }
   },
+  "load_energy_solar_dc": {
+    "name": "Load Energy Solar (DC)",
+    "topic": "load_energy_solar_dc",
+    "main": "both",
+    "individual": true,
+    "config": {
+      "state_class": "total",
+      "unit_of_measurement": "kWh",
+      "device_class": "energy"
+    }
+  },
   "load_energy_grid_daily": {
     "name": "Load Energy Grid (Daily)",
     "topic": "load_energy_grid_daily",

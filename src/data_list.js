@@ -1,4 +1,4 @@
-let dataList = { inverters:{}, main: {}, schedule: {} }
+let dataList = { inverters:{}, main: {}, schedule: {}, micro_inverters: {} }
 const log = require('./logger')
 
 const cache = require('./sqlite')

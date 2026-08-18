@@ -132,6 +132,7 @@ static const LuxRegDef LUX_INPUT_REGS[] = {
 // ── BLOCK IN_B: 40–79 — Cumulative energy, faults, temperatures ──────────────
 // NOTE: VAL_U32 entries consume TWO registers (addr = LOW, addr+1 = HIGH).
 //       The bulk read block covers both; the firmware driver must combine them.
+//offset = (register - 40) * 2
 { 40, REG_INPUT, VAL_U32,   ACC_R,  0.1f,   "kWh",  "epv1_all",           "PV1 Total Cumulative Energy",     -1,   -1, POLL_SLOW   },
 { 42, REG_INPUT, VAL_U32,   ACC_R,  0.1f,   "kWh",  "epv2_all",           "PV2 Total Cumulative Energy",     -1,   -1, POLL_SLOW   },
 { 44, REG_INPUT, VAL_U32,   ACC_R,  0.1f,   "kWh",  "epv_all",            "PV Total Cumulative Energy",      -1,   -1, POLL_SLOW   },

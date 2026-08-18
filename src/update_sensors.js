@@ -6,6 +6,7 @@ const mqtt = require('./mqtt')
 const previousDay = require('./previous_day')
 const calculatedSensors = require('./calculated_sensors')
 const SENSOR_CONFIGS = require('./sensor_configs')
+const getOpenDtu = require('./get_open_dtu')
 
 const INVERTER_CONFIGS = require('/app/data/config.json')?.inverters
 const INFLUX_TOKEN = process.env.INFLUX_TOKEN, INFLUX_URL = process.env.INFLUX_URL, INFLUX_ORG = process.env.INFLUX_ORG, INFLUX_BUCKET = process.env.INFLUX_BUCKET
@@ -121,7 +122,9 @@ module.exports = async(inverter_num, data) =>{
         influxWrite(i, `inverter_${inverter_num}`, data[i], sensor?.config?.unit_of_measurement || sensor?.unit_of_measurement, timeNow)
       }
     }
+
     await calculatedSensors(influxWrite, timeNow)
+    if(data?.get_open_dtu_values) await getOpenDtu(inverter_num, influxWrite, timeNow)
     influxWriteClient.flush()
     dataList.main.updated = Math.round(timeNow / 1000)
     dataList.updated = timeNow

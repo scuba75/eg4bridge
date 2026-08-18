@@ -1,6 +1,7 @@
 'use strict'
 const log = require('./logger')
 const mqtt = require('./mqtt')
+const createMicroInverters = require('./create_micro_inverters')
 
 const SENSOR_CONFIGS = require('./sensor_configs')
 const INVERTER_CONFIGS = require('/app/data/config.json')?.inverters
@@ -79,6 +80,7 @@ module.exports = async()=>{
         }
       }
     }
+    await createMicroInverters()
     log.info(`Created all Sensors...`)
     return true
   }catch(e){

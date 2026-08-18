@@ -25,10 +25,11 @@ module.exports = async(sensor_id, sensor_topic)=>{
     if(!key) return
 
     let data = await cache.get(key, 'daily')
+
     if(!data?.main) return
 
-    let value = data.main[sensor_id]
-    if(!value && value != 0) return;
+    let value = data.main[sensor_id] || 0
+    //if(!value && value != 0) return;
 
     mqtt.publish(`solar_inverter/main/${sensor_topic?.replace('_daily', '_yesterday')}/state`, value?.toString())
 

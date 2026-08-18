@@ -413,8 +413,8 @@ class EG4Bridge extends EventEmitter {
     const i16 = (o) => buf.readInt16LE(o);
 
     const status = u16(0);
-    const pv_voltage = (i16(2)  / 10.0);
-    const v_pv_2 = i16(4)  / 10.0;
+    const pv_voltage_1 = (i16(2)  / 10.0);
+    const pv_voltage_2 = i16(4)  / 10.0;
     const v_pv_3 = i16(6)  / 10.0;
     const battery_voltage  = i16(8)  / 10.0;
 
@@ -423,8 +423,8 @@ class EG4Bridge extends EventEmitter {
 
     const internal_fault = u16(12);
 
-    const p_pv_1 = i16(14);
-    const p_pv_2 = i16(16);
+    const pv_power_1 = i16(14);
+    const pv_power_2 = i16(16);
     const p_pv_3 = i16(18);
     const battery_power_charge = i16(20);
     const battery_power_discharge = i16(22);
@@ -450,8 +450,8 @@ class EG4Bridge extends EventEmitter {
     const p_to_grid = i16(52);
     const grid_power_importing = i16(54);
 
-    const pv_energy_daily = i16(56) / 10.0;
-    const e_pv_2_day = i16(58) / 10.0;
+    const pv_e_daily_1 = i16(56) / 10.0;
+    const pv_e_daily_2 = i16(58) / 10.0;
     const e_pv_3_day = i16(60) / 10.0;
     const e_inv_day  = i16(62) / 10.0;
     const ac_charge_energy_daily  = i16(64) / 10.0;
@@ -464,7 +464,11 @@ class EG4Bridge extends EventEmitter {
     const v_bus_1 = i16(76) / 10.0;
     const v_bus_2 = i16(78) / 10.0;
 
-    const pv_power = +(p_pv_1 + p_pv_2 + p_pv_3);
+    const pv_power_dc = +(pv_power_1 + pv_power_2);
+
+    const pv_energy_daily_1 = roundValue(pv_e_daily_1 || 0);
+    const pv_energy_daily_2 = roundValue(pv_e_daily_2 || 0);
+    const pv_energy_dc_daily = (pv_energy_daily_1 || 0) + (pv_energy_daily_2 || 0);
 
     const home_live = grid_power_importing - ac_charge_power + p_inv - p_to_grid;
     const home_day  = (grid_energy_daily - ac_charge_energy_daily + e_inv_day - e_to_grid_day);
@@ -475,26 +479,29 @@ class EG4Bridge extends EventEmitter {
 
     const battery_energy_charge_solar_daily = roundValue(battery_energy_charge_daily - ac_charge_energy_daily)
 
-    const load_energy_solar_daily = roundValue(((pv_energy_daily > battery_energy_charge_solar_daily ) ? (pv_energy_daily - battery_energy_charge_solar_daily):0))
+    const load_energy_solar_dc = roundValue(((pv_energy_dc_daily > battery_energy_charge_solar_daily ) ? (pv_energy_dc_daily - battery_energy_charge_solar_daily):0))
     const load_energy_grid_daily = roundValue(((grid_energy_daily > ac_charge_energy_daily) ? (grid_energy_daily - ac_charge_energy_daily):0))
-    const load_energy_daily = load_energy_solar_daily + load_energy_grid_daily
+
 
     const grid_importing = (grid_power_importing > 100) ? "ON":"OFF"
-    const pv_power_charge = +((grid_power_importing > 100) ? pv_power:((battery_power_charge > 0) ? (battery_power_charge - ac_charge_power):0))
-    const pv_power_load = +(((pv_power - pv_power_charge) > 0) ? (pv_power - pv_power_charge):0)
+    const pv_power_charge_dc = +((grid_power_importing > 100) ? pv_power_dc:((battery_power_charge > 0) ? (battery_power_charge - ac_charge_power):0))
+    const pv_power_load_dc = +(((pv_power_dc - pv_power_charge_dc) > 0) ? (pv_power_dc - pv_power_charge_dc):0)
+
     // Emit raw + derived fields
     const payload = {
       status, status_text,
-      pv_voltage: roundValue(pv_voltage, 1), battery_voltage: roundValue(battery_voltage, 1), battery_soc: +battery_soc,
-      pv_power, battery_power,
+      pv_voltage_1: roundValue(pv_voltage_1, 1), pv_voltage_2: roundValue(pv_voltage_2, 1),
+      pv_power_1, pv_power_2, pv_power_dc, battery_power, pv_power_charge_dc, pv_power_load_dc, pv_power_load: pv_power_load_dc, pv_power_charge: pv_power_charge_dc,
+      battery_voltage: roundValue(battery_voltage, 1), battery_soc: +battery_soc,
       battery_power_charge: +battery_power_charge, battery_power_discharge: +battery_power_discharge,
-      grid_voltage: roundValue(grid_voltage, 1), grid_power_importing,
-      pv_energy_daily: roundValue(pv_energy_daily), ac_charge_energy_daily: roundValue(ac_charge_energy_daily),
+      grid_voltage: roundValue(grid_voltage, 1), grid_power_importing, load_energy_solar_dc, load_energy_grid_daily,
+      pv_energy_daily_1, pv_energy_daily_2, pv_energy_dc_daily,
+      ac_charge_energy_daily: roundValue(ac_charge_energy_daily),
       battery_energy_charge_daily: roundValue(battery_energy_charge_daily), battery_energy_discharge_daily: roundValue(battery_energy_discharge_daily),
       grid_energy_daily: roundValue(grid_energy_daily),
-      battery_energy_charge_solar_daily, load_energy_daily, load_energy_solar_daily, load_energy_grid_daily,
-      pv_power_charge, pv_power_load, ac_charge_power: +ac_charge_power,
-      pv_current: roundValue(((pv_voltage > 0) ? (p_pv_1 / pv_voltage) : 0)),
+      battery_energy_charge_solar_daily,
+      ac_charge_power: +ac_charge_power,
+      pv_current_1: roundValue(((pv_voltage_1 > 0) ? (pv_power_1 / pv_voltage_1) : 0)), pv_current_2: roundValue(((pv_voltage_2 > 0) ? (pv_power_2 / pv_voltage_2) : 0)),
       grid_current: roundValue(((grid_voltage > 0) ? (grid_power_importing / grid_voltage) : 0)),
       battery_current: roundValue(((battery_voltage > 0) ? (battery_power / battery_voltage) : 0)),
       battery_charging: (battery_power_charge > 0) ? "ON":"OFF",
@@ -503,7 +510,7 @@ class EG4Bridge extends EventEmitter {
       grid_available: (grid_voltage > 100) ? "ON":"OFF",
       battery_energy_cost_daily: roundValue(ac_charge_energy_daily * POWER_COST),
       grid_energy_cost_daily: roundValue(grid_energy_daily * POWER_COST),
-      load_energy_cost_daily: roundValue(load_energy_grid_daily * POWER_COST)
+      get_open_dtu_values:  true
     };
 
     this.emit('data', { inverter_num: this.inverter_num, data: payload });
@@ -538,6 +545,7 @@ class EG4Bridge extends EventEmitter {
     const uptime  = u32(60);
 
     const home_total = (e_to_user_all - e_rec_all + e_inv_all - e_to_grid_all);
+
 
     this.emit('data', {
         inverter_num: this.inverter_num,
@@ -620,7 +628,10 @@ class EG4Bridge extends EventEmitter {
     const eps_L2_volt = i16(16) / 10.0;
     const eps_L1_watt = i16(18);
     const eps_L2_watt = i16(20);
-    const ac_couple_pwr = (buf.length >= 68) ? u16(66) : null;
+    const ac_c_pwr = (buf.length >= 68) ? u16(66) : null;
+
+    const ac_couple_pwr = ac_c_pwr > 15 ? ac_c_pwr:0;
+
     this.emit('data', {
       inverter_num: this.inverter_num,
       data: { ac_couple_pwr }
