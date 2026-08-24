@@ -1,13 +1,12 @@
-'use strict'
+import net from 'net';
+import os from 'os';
+import { promises as dns } from 'dns';
+import EventEmitter from 'events';
 
-const net = require('net');
-const os = require('os');
-const dns = require('dns').promises;
-const EventEmitter = require('events');
+import INVERTER_STATES from './inverter_states.json' with { type: 'json' };
+import WARNING_CODES from './warning_codes.json' with { type: 'json' };
+import FAULT_CODES from './fault_codes.json' with { type: 'json' };
 
-const INVERTER_STATES = require('./inverter_states.json')
-const WARNING_CODES = require('./warning_codes.json')
-const FAULT_CODES = require('./fault_codes.json')
 const POWER_COST = parseFloat(process.env.POWER_COST || "0.1044288425047438")
 const roundValue = (value, decimal_places)=>{
   return parseFloat((value || 0)?.toFixed(decimal_places || 2))
@@ -916,4 +915,4 @@ function crc16Modbus(buffer) {
   return crc & 0xFFFF;
 }
 
-module.exports = { EG4Bridge };
+export default EG4Bridge;

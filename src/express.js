@@ -1,42 +1,20 @@
-'use strict'
-const log = require('./logger')
-const express = require('express')
-const cache = require('./sqlite')
-const { dataList } = require('./data_list')
-const sorter = require('json-array-sorter')
+import log from './logger.js';
+import express from 'express';
 
-const PORT = process.env.PORT || 3000
+import { dataList } from './data_list.js';
 
-const app = express()
+const PORT = process.env.PORT || 3000;
 
-const server = app.listen(PORT, ()=>{
-  log.info(`eg4-bridge is listening on ${server.address().port}`)
-})
+const app = express();
 
-app.get('/data', (req, res)=>{
-  if(dataList?.main){
-    res.json(dataList)
-  }else{
-    res.sendStatus(200)
+const server = app.listen(PORT, () => {
+  log.info(`eg4-bridge is listening on ${server.address().port}`);
+});
+
+app.get('/data', (req, res) => {
+  if (dataList?.main) {
+    res.json(dataList);
+  } else {
+    res.sendStatus(200);
   }
-
-})
-/*
-app.get('/stats', async(req, res)=>{
-  try{
-    let data = {}
-    data.daily = await cache.all('daily')
-    data.minute = await cache.all('minute')
-    if(data?.daily && data.minute){
-      data.daily = sorter([{ column: 'updated', order: 'ascending' }], data.daily)
-      data.minute = sorter([{ column: 'updated', order: 'ascending' }], data.minute)
-      res.json(data)
-    }else{
-      res.sendStatus(400)
-    }
-  }catch(e){
-    res.sendStatus(400)
-    log.error(e)
-  }
-})
-*/
+});

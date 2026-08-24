@@ -1,9 +1,9 @@
-let dataList = { inverters:{}, main: {}, schedule: {}, micro_inverters: {} }
-const log = require('./logger')
+import log from '/app/src/logger.js';
+import cache from '/app/src/cache/index.js';
 
-const cache = require('./sqlite')
+let dataList = { inverters: {}, main: {}, schedule: {}, micro_inverters: {} };
 
-const SYNC_INTERVAL = (process.env.SYNC_INTERVAL_SECONDS || 20)
+const SYNC_INTERVAL = (process.env.SYNC_INTERVAL_SECONDS || 20);
 
 function zonedTimestamp(timeStamp, timeZone = "America/New_York") {
   const parts = Object.fromEntries(
@@ -20,32 +20,33 @@ function zonedTimestamp(timeStamp, timeZone = "America/New_York") {
       .formatToParts(new Date(timeStamp || Date.now()))
       .map(p => [p.type, p.value])
   );
-  let s_part = (parts.second < 30) ? "00":"30"
-  let h_part = (parts.hour < 24) ? parts.hour:"00"
-  return { date: `${parts.year}-${parts.month}-${parts.day}`, time: `${h_part}:${parts.minute}:${s_part}`, month: parts.month, day: parts.day,  year: parts.year }
+  let s_part = (parts.second < 30) ? "00" : "30";
+  let h_part = (parts.hour < 24) ? parts.hour : "00";
+  return { date: `${parts.year}-${parts.month}-${parts.day}`, time: `${h_part}:${parts.minute}:${s_part}`, month: parts.month, day: parts.day, year: parts.year };
 }
-const saveData = async()=>{
-  try{
-    let data = JSON.parse(JSON.stringify(dataList))
-    if(!data?.updated) return
+async function saveData(){
+  try {
+    let data = JSON.parse(JSON.stringify(dataList));
+    if (!data?.updated) return;
 
-    let key = zonedTimestamp(data.updated)
-    if(!key?.date || !key?.time) return
+    let key = zonedTimestamp(data.updated);
+    if (!key?.date || !key?.time) return;
 
-    let payload = {...key, ...data}
-    await cache.set(key.date, payload, 'daily')
-  }catch(e){
-    log.error(e)
+    let payload = { ...key, ...data };
+    await cache.set(key.date, payload, 'daily');
+  } catch (e) {
+    log.error(e);
   }
-}
-const sync = async()=>{
-  try{
-    await saveData()
-    setTimeout(sync, SYNC_INTERVAL * 1000)
-  }catch(e){
-    setTimeout(sync, 5000)
-    log.error(e)
+};
+async function sync(){
+  try {
+    await saveData();
+    setTimeout(sync, SYNC_INTERVAL * 1000);
+  } catch (e) {
+    setTimeout(sync, 5000);
+    log.error(e);
   }
-}
-sync()
-module.exports = { dataList }
+};
+sync();
+
+export { dataList };

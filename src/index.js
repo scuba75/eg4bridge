@@ -1,58 +1,48 @@
-'use strict'
-const log = require('./logger')
-//log.setLevel('debug');
-const mqtt = require('./mqtt')
-const createSensors = require('./create_sensors')
-const cache = require('./sqlite')
+import log from './logger.js';
+import mqtt from './mqtt/index.js';
+import createSensors from './create_sensors/index.js';
+import cache from './cache/index.js';
 
-const inverters = require('./inverters')
-require('./express')
+import inverters from './inverters.js';
+import './express.js';
 
-const MQTT_HOST = process.env.MQTT_HOST
+const MQTT_HOST = process.env.MQTT_HOST;
 
-const checkCache = ()=>{
-  try{
-    let status = cache.status()
-    if(status && MQTT_HOST){
-      checkMqtt()
-      return
+function checkCache(){
+  try {
+    let status = cache.status();
+    if (status && MQTT_HOST) {
+      return checkMqtt();
     }
-    if(status && !MQTT_HOST){
-      log.info(`Skipping MQTT check, MQTT_HOST not provided...`)
-      startInverters()
-      return
+    if (status && !MQTT_HOST) {
+      log.info(`Skipping MQTT check, MQTT_HOST not provided...`);
+      return startInverters();
     }
-    setTimeout(checkCache, 5000)
-  }catch(e){
-    setTimeout(checkCache, 5000)
-    log.error(e)
+    setTimeout(checkCache, 5000);
+  } catch (e) {
+    setTimeout(checkCache, 5000);
+    log.error(e);
   }
-}
-const checkMqtt = async()=>{
-  try{
-    let status = mqtt.status()
-    if(status) status = await createSensors()
-    if(status){
-      startInverters()
-      return
-    }
-    setTimeout(checkMqtt, 5000)
-  }catch(e){
-    log.error(e)
-    setTimeout(checkMqtt, 5000)
+};
+async function checkMqtt(){
+  try {
+    let status = mqtt.status();
+    if (status) status = await createSensors();
+    if (status) return startInverters();
+    setTimeout(checkMqtt, 5000);
+  } catch (e) {
+    log.error(e);
+    setTimeout(checkMqtt, 5000);
   }
-}
-const startInverters = async()=>{
-  try{
-    let status = inverters.status()
-    if(status){
-      inverters.start()
-      return
-    }
-    setTimeout(startInverters, 5000)
-  }catch(e){
-    setTimeout(startInverters, 5000)
-    log.error(e)
+};
+async function startInverters(){
+  try {
+    let status = inverters.status();
+    if (status) return inverters.start();
+    setTimeout(startInverters, 5000);
+  } catch (e) {
+    setTimeout(startInverters, 5000);
+    log.error(e);
   }
-}
-checkCache()
+};
+checkCache();
