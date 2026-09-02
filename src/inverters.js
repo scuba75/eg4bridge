@@ -1,7 +1,7 @@
 import log from './logger.js';
 
 
-import EG4Bridge from './eg4_bridge/index.js';
+import EG4Bridge from 'eg4-bridge';
 import { dataList } from './data_list.js';
 
 import updateSensors from './update_sensors/index.js';

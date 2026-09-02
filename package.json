@@ -1,13 +1,14 @@
 {
-  "name": "eg4bridge",
+  "name": "inverter-monitor",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "chmod a+x build.sh && ./build.sh Dockerfile.dev eg4bridge:test",
-    "prod": "chmod a+x build.sh && ./build.sh Dockerfile eg4bridge:latest"
+    "update": "chmod a+x updategitdependency.sh && ./updategitdependency.sh",
+    "build": "chmod a+x build.sh && ./build.sh Dockerfile.dev inverter-monitor:test",
+    "prod": "chmod a+x build.sh && ./build.sh Dockerfile inverter-monitor:latest"
   },
   "nodemonConfig": {
     "ignore": [
@@ -16,21 +17,20 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/scuba75/eg4bridge.git"
+    "url": "git+https://github.com/scuba75/inverter-monitor.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/scuba75/eg4bridge/issues"
+    "url": "https://github.com/scuba75/inverter-monitor/issues"
   },
-  "homepage": "https://github.com/scuba75/eg4bridge#readme",
+  "homepage": "https://github.com/scuba75/inverter-monitor#readme",
   "dependencies": {
     "@influxdata/influxdb-client": "^1.35.0",
     "better-sqlite3": "^12.8.0",
-    "chalk": "^4.1.0",
+    "eg4-bridge": "github:scuba75/eg4-bridge",
     "express": "^5.2.1",
     "json-array-sorter": "^0.0.5",
-    "mqtt": "^5.15.1",
-    "socket.io": "^4.8.3"
+    "mqtt": "^5.15.1"
   }
 }
