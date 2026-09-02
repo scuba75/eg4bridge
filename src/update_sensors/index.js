@@ -1,20 +1,13 @@
 import log from '/app/src/logger.js';
 import { InfluxDB, Point } from '@influxdata/influxdb-client';
-import { dataList } from '/app/src/data_list.js';
 import mqtt from '/app/src/mqtt/index.js';
-import SENSOR_CONFIGS from '/app/src/sensor_configs/index.js';
-import CONFIGS from '/app/data/config.json' with { type: 'json' };
+import { dataList } from '/app/src/data_list.js';
 
-import previousDay from './previous_day.js';
-import calculatedSensors from './calculated_sensors.js';
-import updateMicroInverters from './micro_inverters.js';
-
-const INVERTER_CONFIGS = CONFIGS?.inverters;
-
+import mainInverters from './main/index.js'
+import calculatedSensors from './calculated/index.js'
+import manualSensors from './manual_sensors/index.js'
+import microInverters from './micro_inverters.js'
 const INFLUX_TOKEN = process.env.INFLUX_TOKEN, INFLUX_URL = process.env.INFLUX_URL, INFLUX_ORG = process.env.INFLUX_ORG, INFLUX_BUCKET = process.env.INFLUX_BUCKET;
-
-let MASTER_INVERTER = 1;
-
 let influxClient, influxWriteClient;
 const influxInit = () => {
   try {
@@ -52,86 +45,18 @@ const influxWrite = (id, device, value, unit_of_measurement, timeNow) => {
     log.error(e);
   }
 };
-const roundValue = (value, decimal_places) => {
-  return parseFloat((value || 0)?.toFixed(decimal_places || 2));
-};
-
-export default async (inverter_num, data) => {
-  try {
-    if (!inverter_num || !data || !dataList?.inverters[inverter_num]) return;
-
+export default async function(inv_num, data){
+  try{
     let timeNow = Date.now();
-
-    if (data?.master_slave == 1) MASTER_INVERTER = inverter_num;
-    if (!dataList.main) dataList.main = {};
-
-    for (let i in data) {
-      if (!i || (!data[i] && +(data[i] != 0))) continue;
-      dataList.inverters[inverter_num][i] = data[i];
-
-      let sensor = SENSOR_CONFIGS[i];
-      if (!sensor) continue;
-
-      let main_topic = sensor.topic;
-      if (!main_topic) continue;
-
-      if (sensor?.main) {
-        let main_state_topic = `solar_inverter/main/${main_topic}/state`;
-        if (sensor.main == "master" && inverter_num == MASTER_INVERTER) {
-          let value = data[i];
-          if (i == 'master_slave') value = inverter_num;
-          dataList.main[i] = value;
-          mqtt.sendSensorValue(main_state_topic, value);
-        }
-        if (sensor.main == "both") {
-          let value = parseFloat(data[i] || 0);
-          for (let d in INVERTER_CONFIGS) {
-            let next_inverter = +(+d + 1);
-            if (next_inverter == inverter_num) continue;
-
-            if (dataList.inverters[next_inverter]) value += parseFloat(dataList.inverters[next_inverter][i] || 0);
-          }
-          if (value) value = roundValue(value);
-          dataList.main[i] = value;
-          mqtt.sendSensorValue(main_state_topic, value);
-        }
-        if (sensor.main == "average") {
-          let value = parseFloat(data[i] || 0), count = 1;
-          for (let d in INVERTER_CONFIGS) {
-            let next_inverter = +(+d + 1);
-            if (next_inverter == inverter_num) continue;
-
-            if (dataList.inverters[next_inverter]) {
-              value += parseFloat(dataList.inverters[next_inverter][i] || 0);
-              count++;
-            }
-          }
-          if (value) value = roundValue((value / count), 1);
-          dataList.main[i] = value;
-          mqtt.sendSensorValue(main_state_topic, value);
-        }
-        if (sensor.main == inverter_num) {
-          dataList.main[i] = data[i];
-          mqtt.sendSensorValue(main_state_topic, data[i]);
-        }
-        if (i?.endsWith('_daily')) previousDay(i, main_topic);
-        if (dataList.main[i] || dataList.main[i] == 0) influxWrite(i, 'main', dataList.main[i], sensor?.config?.unit_of_measurement || sensor?.unit_of_measurement, timeNow);
-      }
-
-      if (sensor?.individual) {
-        let state_topic = `solar_inverter/${inverter_num}/${main_topic}/state`;
-        mqtt.sendSensorValue(state_topic, data[i]);
-        influxWrite(i, `inverter_${inverter_num}`, data[i], sensor?.config?.unit_of_measurement || sensor?.unit_of_measurement, timeNow);
-      }
-    }
-
-    await calculatedSensors(influxWrite, timeNow);
-    if (data?.get_open_dtu_values) await updateMicroInverters(inverter_num, influxWrite, timeNow);
+    await mainInverters(inv_num, data, influxWrite, timeNow)
+    await calculatedSensors(influxWrite, timeNow)
+    await manualSensors();
+    if (data?.get_open_dtu_values) await microInverters(inv_num, influxWrite, timeNow);
     influxWriteClient.flush();
     dataList.main.updated = Math.round(timeNow / 1000);
     dataList.updated = timeNow;
-    if (dataList?.main?.updated) mqtt.sendSensorValue('solar_inverter/main/updated/state', dataList.main.updated);
-  } catch (e) {
-    log.error(e);
+    if (dataList?.main?.updated) mqtt.sendSensorValue('solar_inverter/status/updated/state', dataList.main.updated);
+  }catch(e){
+    log.error(e)
   }
-};
+}

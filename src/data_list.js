@@ -1,7 +1,7 @@
 import log from '/app/src/logger.js';
 import cache from '/app/src/cache/index.js';
 
-let dataList = { inverters: {}, main: {}, schedule: {}, micro_inverters: {} };
+let dataList = { inverters: {}, main: {}, schedule: {}, micro_inverters: {} }, datalist_ready;
 
 const SYNC_INTERVAL = (process.env.SYNC_INTERVAL_SECONDS || 20);
 
@@ -23,6 +23,21 @@ function zonedTimestamp(timeStamp, timeZone = "America/New_York") {
   let s_part = (parts.second < 30) ? "00" : "30";
   let h_part = (parts.hour < 24) ? parts.hour : "00";
   return { date: `${parts.year}-${parts.month}-${parts.day}`, time: `${h_part}:${parts.minute}:${s_part}`, month: parts.month, day: parts.day, year: parts.year };
+}
+async function restoreData(){
+  try{
+    if(!cache.status()) return setTimeout(restoreData, 5000)
+    datalist_ready = true
+    return true
+    let key = zonedTimestamp(Date.now())
+    let data = await cache.get(key.date, 'daily')
+    if(data) dataList = data
+    datalist_ready = true
+    log.info(`Restored dataList states...`)
+    return true
+  }catch(e){
+    log.error(e)
+  }
 }
 async function saveData(){
   try {
@@ -47,6 +62,19 @@ async function sync(){
     log.error(e);
   }
 };
-sync();
 
-export { dataList };
+function dataListStatus(){
+  return datalist_ready
+}
+async function init(){
+  try{
+    let status = await restoreData()
+    if(status) return sync()
+    setTimeout(init, 5000)
+  }catch(e){
+    log.error(e)
+    setTimeout(init, 5000)
+  }
+}
+queueMicrotask(init)
+export { dataList, dataListStatus };

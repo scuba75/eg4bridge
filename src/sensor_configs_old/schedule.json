@@ -74,5 +74,25 @@
     "config": {
       "icon": "mdi:clock"
     }
+  },
+  "load_shedding": {
+    "name": "Load Shedding",
+    "topic": "load_shedding",
+    "device": "Schedule",
+    "sensor_type": "binary_sensor",
+    "main": 1,
+    "config": {
+      "icon": "mdi:home-lightning-bolt"
+    }
+  },
+  "battery_ac_charged": {
+    "name": "Battery AC Charged (Today)",
+    "topic": "battery_ac_charged",
+    "device": "Schedule",
+    "sensor_type": "binary_sensor",
+    "main": 1,
+    "config": {
+      "icon": "mdi:battery-arrow-up"
+    }
   }
 }

@@ -1,5 +1,6 @@
 import mqtt from 'mqtt';
 import log from '/app/src/logger.js';
+import sensorList from '/app/src/sensor_list.js'
 import processMsg from './process_msg.js';
 
 let connectMsg = false, MQTT_STATUS = false, client;
@@ -33,7 +34,7 @@ if (MQTT_HOST) {
     });
   });
   client.on('message', (topic, msg) => {
-    processMsg(topic?.split('/')[2], msg?.toString());
+    return processMsg(topic, msg?.toString());
   });
 }
 
@@ -64,15 +65,32 @@ function registerSensor(topic, payload){
     });
   });
 };
-function sendSensorValue(topic, value, retain = false){
+function sendSensorValue(topic, value){
   if (!MQTT_STATUS || !topic) return;
+  let retain = sensorList.get(topic)
   return new Promise((resolve, reject) => {
-    client.publish(topic, (value || 0)?.toString(), { qos: 1, retain: retain }, (error) => {
+    client.publish(topic, (value || 0)?.toString(), { qos: 1, retain }, (error) => {
       if (error) reject(error);
       resolve();
     });
   });
 };
-
-
-export default { status, publish, registerSensor, sendSensorValue };
+function subscribe(topic){
+  if (!MQTT_STATUS || !topic) return;
+  return new Promise((resolve, reject)=>{
+    client.subscribe(topic, (error)=>{
+      if(error)  reject(error)
+      resolve()
+    })
+  })
+}
+function deleteTopic(topic){
+  if (!MQTT_STATUS || !topic) return;
+  return new Promise((resolve, reject)=>{
+    client.publish(topic, null, { qos: 1, retain: true }, (error)=>{
+      if(error)  reject(error)
+      resolve()
+    })
+  })
+}
+export default { deleteTopic, status, publish, registerSensor, sendSensorValue, subscribe };

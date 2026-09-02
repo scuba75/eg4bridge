@@ -1,3 +1,4 @@
+import { dataList } from '/app/src/data_list.js'
 import Database from 'better-sqlite3';
 import log from '/app/src/logger.js';
 import SQLITE_TABLES from './sqlite_tables.json' with { type: 'json' };
@@ -6,8 +7,16 @@ const DB_FILE = process.env.SQLITE_FILE || '/app/data/sqlite.db';
 
 const db = new Database(DB_FILE);
 
+
 let SQLITE_STATUS, SQLITE_STMT = {};
 
+async function restoreValues(){
+  let values_to_restore = [{ key: 'load_shedding', listKey: 'schedule' }]
+  for(let i of values_to_restore){
+    let data = await get(i.key)
+    if(data?.state) dataList[i.listKey][i.key] = data.state
+  }
+}
 async function expireSQLITE(){
   try {
     let timeNow = Date.now();
@@ -32,6 +41,7 @@ async function init(){
       if (SQLITE_TABLES[i].expire) SQLITE_STMT[i].expire = db.prepare(SQLITE_TABLES[i].expire);
       if (SQLITE_TABLES[i].all) SQLITE_STMT[i].all = db.prepare(SQLITE_TABLES[i].all);
     }
+    await restoreValues()
     SQLITE_STATUS = true;
     expireSQLITE();
   } catch (e) {

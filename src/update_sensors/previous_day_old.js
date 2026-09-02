@@ -2,8 +2,6 @@ import log from '/app/src/logger.js';
 import cache from '/app/src/cache/index.js';
 import mqtt from '/app/src/mqtt/index.js';
 
-import all_sensors from '/app/src/sensor_configs/index.js'
-
 function getPreviousDate() {
   const parts = Object.fromEntries(
     new Intl.DateTimeFormat("en-US", {
@@ -19,19 +17,21 @@ function getPreviousDate() {
   return `${parts.year}-${parts.month}-${parts.day}`;
 }
 
-export default async function(sensor_key, sensor_topic, sensor_id){
-  try{
+export default async (sensor_id, sensor_topic) => {
+  try {
+    if (!sensor_id || !sensor_topic) return;
     let key = getPreviousDate();
-    if(!key) return;
+    if (!key) return;
 
-    let data = await cache.get(key, 'daily')
+    let data = await cache.get(key, 'daily');
 
-    if(!data?.main) return;
+    if (!data?.main) return;
 
-    let value = data.main[sensor_key] || 0;
-    await mqtt.sendSensorValue(`solar_inverter/${sensor_id}/${sensor_topic.replace('_daily', '_yesterday')}/state`, value);
+    let value = data.main[sensor_id] || 0;
 
-  }catch(e){
-    log.error(e)
+    mqtt.publish(`solar_inverter/main/${sensor_topic?.replace('_daily', '_yesterday')}/state`, value?.toString());
+
+  } catch (e) {
+    log.error(e);
   }
-}
+};

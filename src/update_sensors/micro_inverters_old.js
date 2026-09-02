@@ -1,7 +1,6 @@
 import log from '/app/src/logger.js';
 import { dataList } from '/app/src/data_list.js';
 import mqtt from '/app/src/mqtt/index.js';
-
 import previousDay from './previous_day.js';
 
 let MICRO_INVERTER_SN = [], OPENDTU_HOST = process.env.OPENDTU_HOST, OPENDTU_AUTH = process.env.OPENDTU_AUTH;
@@ -56,18 +55,18 @@ async function updateInverterData(inverter_num, influxWrite, timeNow, data) {
     for (let i in data.DC) {
       if (!data?.DC[i]) continue;
       dataList.micro_inverters[inverter_num][`pv_energy_dc_${i}`] = roundValue((+(data.DC[i]?.YieldDay.v || 0)) / 1000, 1);
-      await mqtt.sendSensorValue(`micro_inverter/${inverter_num}/string/${i}/pv_energy_dc/state`, dataList.micro_inverters[inverter_num][`pv_energy_dc_${i}`]);
+      await mqtt.sendSensorValue(`micro_inverter/${inverter_num}/pv_energy_dc_${i}/state`, dataList.micro_inverters[inverter_num][`pv_energy_dc_${i}`]);
 
       dataList.micro_inverters[inverter_num][`pv_power_dc_${i}`] = parseInt(data.DC[i]?.Power.v || 0);
-      await mqtt.sendSensorValue(`micro_inverter/${inverter_num}/string/${i}/pv_power_dc/state`, dataList.micro_inverters[inverter_num][`pv_power_dc_${i}`]);
+      await mqtt.sendSensorValue(`micro_inverter/${inverter_num}/pv_power_dc_${i}/state`, dataList.micro_inverters[inverter_num][`pv_power_dc_${i}`]);
 
       dataList.micro_inverters[inverter_num][`pv_voltage_dc_${i}`] = parseInt(data.DC[i]?.Voltage.v || 0);
-      await mqtt.sendSensorValue(`micro_inverter/${inverter_num}/string/${i}/pv_voltage_dc/state`, dataList.micro_inverters[inverter_num][`pv_voltage_dc_${i}`]);
+      await mqtt.sendSensorValue(`micro_inverter/${inverter_num}/pv_voltage_dc_${i}/state`, dataList.micro_inverters[inverter_num][`pv_voltage_dc_${i}`]);
 
       dataList.micro_inverters[inverter_num][`pv_current_dc_${i}`] = roundValue(+(data.DC[i]?.Current.v || 0), 2);
-      await mqtt.sendSensorValue(`micro_inverter/${inverter_num}/string/${i}/pv_current_dc/state`, dataList.micro_inverters[inverter_num][`pv_current_dc_${i}`]);
+      await mqtt.sendSensorValue(`micro_inverter/${inverter_num}/pv_current_dc_${i}/state`, dataList.micro_inverters[inverter_num][`pv_current_dc_${i}`]);
     }
-    await mqtt.sendSensorValue(`solar_inverter/${inverter_num}/energy/pv_energy_ac_daily/state`, dataList.inverters[inverter_num].pv_energy_ac_daily);
+    await mqtt.sendSensorValue(`solar_inverter/${inverter_num}/pv_energy_ac_daily/state`, dataList.inverters[inverter_num].pv_energy_ac_daily);
     influxWrite('pv_energy_ac_daily', `inverter_${inverter_num}`, dataList.inverters[inverter_num].pv_energy_ac_daily, 'kWh', timeNow);
   } catch (e) {
     log.error(e);
@@ -90,9 +89,9 @@ export default async (inverter_num, influxWrite, timeNow) => {
     if (data?.total && dataList?.main) {
       let pv_energy_total = roundValue((+(data?.total?.YieldDay?.v || 0)) / 1000, 1);
       if (pv_energy_total == 0 || pv_energy_total >= (dataList.main.pv_energy_ac_daily || 0)) dataList.main.pv_energy_ac_daily = pv_energy_total;
-      await mqtt.sendSensorValue(`solar_inverter/energy/pv_energy_ac_daily/state`, pv_energy_total);
+      await mqtt.sendSensorValue(`solar_inverter/main/pv_energy_ac_daily/state`, pv_energy_total);
       influxWrite('pv_energy_ac_daily', `main`, pv_energy_total, 'kWh', timeNow);
-      await previousDay('pv_energy_ac_daily', 'pv_energy_ac_daily', 'energy');
+      await previousDay('pv_energy_ac_daily', 'pv_energy_ac_daily');
       await mqtt.sendSensorValue(`micro_inverter/main/pv_energy_daily/state`, pv_energy_total);
       await mqtt.sendSensorValue(`micro_inverter/main/ip_address/state`, OPENDTU_HOST);
 

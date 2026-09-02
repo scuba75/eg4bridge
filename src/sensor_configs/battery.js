@@ -1,0 +1,21 @@
+export default {
+  battery_charge_rate: { name: 'Battery Charge Rate', topic: 'battery_charge_rate', id: 'battery', main: 'master', config: { unit_of_measurement: '%/hr', icon: 'mdi:battery-charging-medium' } },
+  battery_charging: { name: 'Battery Charging', topic: 'battery_charging', id: 'battery', main: 'master', sensor_type: 'binary_sensor', unit_of_measurement: 'status', config: { device_class: 'battery_charging' } },
+  battery_charge_soc_start: { name: 'Battery Charge SOC Start', topic: 'battery_charge_soc_start', id: 'battery', main: 'master', config: { state_class: 'measurement', unit_of_measurement: '%', device_class: 'battery' } },
+  battery_charge_soc_end: { name: 'Battery Charge SOC End', topic: 'battery_charge_soc_end', id: 'battery', main: 'master', config: { state_class: 'measurement', unit_of_measurement: '%', device_class: 'battery' } },
+  battery_current: { name: 'Battery Current', topic: 'battery_current', id: 'battery', main: 'both', individual: true, config: { state_class: 'measurement', unit_of_measurement: 'A', device_class: 'current' } },
+  battery_cycle_count: { name: 'Battery Cycles', topic: 'battery_cycle_count', id: 'battery', inverter: 1, config: { state_class: 'total_increasing', unit_of_measurement: 'cycles', accuracy_decimals: 0 } },
+  battery_discharging: { name: 'Battery Discharging', topic: 'battery_discharging', id: 'battery', main: 'master', sensor_type: 'binary_sensor', unit_of_measurement: 'status', config: { icon: 'mdi:battery-arrow-down' } },
+  battery_discharge_rate: { name: 'Battery Discharge Rate', topic: 'battery_discharge_rate', id: 'battery', main: 'master', config: { unit_of_measurement: '%/hr', icon: 'mdi:battery-arrow-down' } },
+  battery_power: { name: 'Battery Power', topic: 'battery_power', id: 'battery', main: 'both', individual: true, config: { state_class: 'measurement', unit_of_measurement: 'W', device_class: 'power' } },
+  battery_power_charge: { name: 'Battery Power Charge', topic: 'battery_power_charge', id: 'battery', main: 'both', individual: true, config: { state_class: 'measurement', unit_of_measurement: 'W', device_class: 'power' } },
+  battery_power_discharge: { name: 'Battery Power Discharge', topic: 'battery_power_discharge', id: 'battery', main: 'both', individual: true, config: { state_class: 'measurement', unit_of_measurement: 'W', device_class: 'power' } },
+  battery_soc: { name: 'Battery SOC', topic: 'battery_soc', id: 'battery', main: 'master', config: { state_class: 'measurement', unit_of_measurement: '%', device_class: 'battery' } },
+  battery_time_to_empty: { name: 'Battery Time to Empty', topic: 'battery_time_to_empty', id: 'battery', main: 'master', config: { state_class: 'measurement', unit_of_measurement: 'h', device_class: 'duration' } },
+  battery_time_to_charge_soc: { name: 'Battery Time to Charge SOC', topic: 'battery_time_to_charge_soc', id: 'battery', main: 'master', config: { state_class: 'measurement', unit_of_measurement: 'h', device_class: 'duration' } },
+  battery_estimated_charge_soc: { name: 'Battery Charge SOC Time', topic: 'battery_estimated_charge_soc', id: 'battery', main: 'master', unit_of_measurement: 'status', config: { icon: 'mdi:clock' } },
+  battery_time_to_full: { name: 'Battery Time to Full', topic: 'battery_time_to_full', id: 'battery', main: 'master', config: { state_class: 'measurement', unit_of_measurement: 'h', device_class: 'duration' } },
+  battery_estimated_full: { name: 'Battery Full Time', topic: 'battery_estimated_full', id: 'battery', main: 'master', unit_of_measurement: 'status', config: { icon: 'mdi:clock' } },
+  battery_estimated_empty: { name: 'Battery Empty Time', topic: 'battery_estimated_empty', id: 'battery', main: 'master', unit_of_measurement: 'status', config: { icon: 'mdi:clock' } },
+  battery_voltage: { name: 'Battery Voltage', topic: 'battery_voltage', id: 'battery', main: 'master', individual: true, config: { state_class: 'measurement', unit_of_measurement: 'V', device_class: 'voltage' } }
+}

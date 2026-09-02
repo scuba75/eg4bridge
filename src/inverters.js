@@ -1,13 +1,15 @@
 import log from './logger.js';
-import cache from './cache/index.js';
-import mqtt from './mqtt/index.js';
-import schedule from './mqtt/schedule.js';
-import updateSensors from './update_sensors/index.js';
+
+
 import EG4Bridge from './eg4_bridge/index.js';
 import { dataList } from './data_list.js';
 
-import SENSOR_CONFIGS from './sensor_configs/index.js';
-import SYSTEM_CONFIGS from '/app/data/config.json' with { type: 'json' };
+import updateSensors from './update_sensors/index.js';
+import updateHoldData from './update_hold_data.js';
+//import automation from './automation/index.js'
+
+//import SENSOR_CONFIGS from './sensor_configs/index.js';
+import SYSTEM_CONFIGS from '/app/config/config.json' with { type: 'json' };
 
 const INVERTER_CONFIGS = SYSTEM_CONFIGS?.inverters;
 const POWER_CONFIGS = SYSTEM_CONFIGS?.max_powers;
@@ -55,35 +57,11 @@ function init(){
       });
       if (inverter_num == 1) {
         log.info(`Setting up hold_data reporting for Inverter ${inverter_num}...`);
+
         INVERTERS[inverter_num].on('hold_data', async (d) => {
-
-          if (!d?.data?.schedule) return;
-          for (let i in d.data.schedule) {
-            if (!i || !d?.data?.schedule || !d?.data?.schedule[i] || !d.data.schedule[i]?.raw) continue;
-
-            let decodedValue = schedule.decode(d.data.schedule[i].raw);
-            if (!decodedValue) continue;
-
-            if (!dataList.schedule) dataList.schedule = {};
-            dataList.schedule[i] = decodedValue;
-
-            let topic = SENSOR_CONFIGS[i]?.topic;
-            if (topic) mqtt.publish(`solar_inverter/main/${topic}/state`, decodedValue?.toString());
-
-            let desired = await cache.get(i);
-            if (!desired?.raw) {
-              await cache.set(i, { raw: d.data.schedule[i].raw, decodedValue: decodedValue, register: d.data.schedule[i].register });
-              desired = cache.get(i);
-            }
-            if (desired?.decodedValue && topic) {
-              let desired_topic = topic?.replace('_actual', '_desired');
-              if (!dataList.schedule) dataList.schedule = {};
-              dataList.schedule[desired_topic] = desired?.decodedValue;
-              mqtt.publish(`solar_inverter/main/${desired_topic}/state`, desired?.decodedValue?.toString());
-            }
-            if (desired?.raw != d.data.schedule[i].raw && d.data.schedule[i].register > 0 && desired?.raw >= 0) INVERTERS[inverter_num].queueWrite(d.data.schedule[i].register, desired.raw);
-          }
+          updateHoldData(d, inverter_num, INVERTERS)
         });
+
       }
     }
     INVERTERS_STATUS = true;
@@ -100,6 +78,7 @@ function start(){
       if (!INVERTERS[i]) continue;
       INVERTERS[i].start();
     }
+    //automation.start()
     return true;
   } catch (e) {
     log.error(e);

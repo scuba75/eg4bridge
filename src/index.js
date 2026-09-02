@@ -2,6 +2,7 @@ import log from './logger.js';
 import mqtt from './mqtt/index.js';
 import createSensors from './create_sensors/index.js';
 import cache from './cache/index.js';
+import { dataListStatus } from './data_list.js'
 
 import inverters from './inverters.js';
 import './express.js';
@@ -11,6 +12,7 @@ const MQTT_HOST = process.env.MQTT_HOST;
 function checkCache(){
   try {
     let status = cache.status();
+    if(status) status = dataListStatus();
     if (status && MQTT_HOST) {
       return checkMqtt();
     }

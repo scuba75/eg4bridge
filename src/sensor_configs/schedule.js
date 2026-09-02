@@ -1,0 +1,35 @@
+export default {
+  grid_charge_start: { name: 'Grid Charge Start (Actual)', topic: 'grid_charge_start', id: 'schedule', device: 'Schedule', register: 68, main: true, config: { icon: 'mdi:clock' } },
+  grid_charge_end: { name: 'Grid Charge End (Actual)', topic: 'grid_charge_end', id: 'schedule', device: 'Schedule', register: 69, main: true, config: { icon: 'mdi:clock' } },
+  grid_first_start: { name: 'Grid First Start (Actual)', topic: 'grid_first_start', id: 'schedule', device: 'Schedule', register: 152, main: true, config: { icon: 'mdi:clock' } },
+  grid_first_end: { name: 'Grid First End (Actual)', topic: 'grid_first_end', id: 'schedule', device: 'Schedule', register: 153, main: true, config: { icon: 'mdi:clock' } },
+  grid_charge_start_desired: { name: 'Grid Charge Start (Desired)', topic: 'grid_charge_start_desired', id: 'schedule', device: 'Schedule', main: true, config: { icon: 'mdi:clock' } },
+  grid_charge_end_desired: { name: 'Grid Charge End (Desired)', topic: 'grid_charge_end_desired', id: 'schedule', device: 'Schedule', main: true, config: { icon: 'mdi:clock' } },
+  grid_first_start_desired: { name: 'Grid First Start (Desired)', topic: 'grid_first_start_desired', id: 'schedule', device: 'Schedule', main: true, config: { icon: 'mdi:clock' } },
+  grid_first_end_desired: { name: 'Grid First End (Desired)', topic: 'grid_first_end_desired', id: 'schedule', device: 'Schedule', main: true, config: { icon: 'mdi:clock' } },
+  //time sensors
+  daily_update_time: { name: `Daily Update Time`, topic: `daily_update_time`, id: 'schedule', sensor_type: 'time', command: 'true', retain: true },
+  grid_start_normal_summer: { name: `Grid Start Normal (Summer)`, topic: `grid_start_normal_summer`, id: 'schedule', sensor_type: 'time', command: 'true',  retain: true },
+  grid_start_normal_winter: { name: `Grid Start Normal (Winter)`, topic: `grid_start_normal_winter`, id: 'schedule', sensor_type: 'time', command: 'true',  retain: true },
+  grid_start_extended_summer: { name: `Grid Start Extended (Summer)`, topic: `grid_start_extended_summer`, id: 'schedule', sensor_type: 'time', command: 'true',  retain: true },
+  grid_start_extended_winter: { name: `Grid Start Extended (Winter)`, topic: `grid_start_extended_winter`, id: 'schedule', sensor_type: 'time', command: 'true',  retain: true },
+  grid_end_normal_summer: { name: `Grid End Normal (Summer)`, topic: `grid_end_normal_summer`, id: 'schedule', sensor_type: 'time', command: 'true',  retain: true },
+  grid_end_normal_winter: { name: `Grid End Normal (Winter)`, topic: `grid_end_normal_winter`, id: 'schedule', sensor_type: 'time', command: 'true',  retain: true },
+  grid_end_extended_summer: { name: `Grid End Extended (Summer)`, topic: `grid_end_extended_summer`, id: 'schedule', sensor_type: 'time', command: 'true',  retain: true },
+  grid_end_extended_winter: { name: `Grid End Extended (Winter)`, topic: `grid_end_extended_winter`, id: 'schedule', sensor_type: 'time', command: 'true',  retain: true },
+  grid_charge_start_summer: { name: `Grid Charge Start (Summer)`, topic: `grid_charge_start_summer`, id: 'schedule', sensor_type: 'time', command: 'true',  retain: true },
+  grid_charge_start_winter: { name: `Grid Charge Start (Winter)`, topic: `grid_charge_start_winter`, id: 'schedule', sensor_type: 'time', command: 'true',  retain: true },
+  grid_charge_end_summer: { name: `Grid Charge End (Summer)`, topic: `grid_charge_end_summer`, id: 'schedule', sensor_type: 'time', command: 'true',  retain: true },
+  grid_charge_end_winter: { name: `Grid Charge End (Winter)`, topic: `grid_charge_end_winter`, id: 'schedule', sensor_type: 'time', command: 'true',  retain: true },
+  peak_start_summer: { name: `Peak Start (Summer)`, topic: `peak_start_summer`, sensor_type: 'time', id: 'schedule', command: 'true',  retain: true },
+  peak_start_winter: { name: `Peak Start (Winter)`, topic: `peak_start_winter`, sensor_type: 'time', id: 'schedule', command: 'true',  retain: true },
+  peak_end_summer: { name: `Peak End (Summer)`, topic: `peak_end_summer`, id: 'schedule', sensor_type: 'time', command: 'true',  retain: true },
+  peak_end_winter: { name: `Peak End (Winter)`, topic: `peak_end_winter`, id: 'schedule', sensor_type: 'time', command: 'true',  retain: true },
+
+  summer_peak_hours: { name: `Summer Peak Hours`, topic: 'summer_peak_hours', id: 'schedule', sensor_type: 'binary_sensor', retain: true, config: { icon: 'mdi:white-balance-sunny' } },
+  peak_hours: { name: `Peak Hours`, topic: 'peak_hours', id: 'schedule', sensor_type: 'binary_sensor', retain: true, config: { icon: 'mdi:lightning-bolt' } },
+  battery_ac_charged: { name: `Battery AC Charged (Today)`, topic: 'battery_ac_charged', id: 'schedule', sensor_type: 'binary_sensor', retain: true, config: { icon: 'mdi:battery-arrow-up' } },
+
+  enable_extended_solar: { name: `Extended Solar`, topic: `enable_extended_solar`, id: 'schedule', sensor_type: 'switch',  command: 'true', retain: true, config: { icon: `mdi:sun-angle`, device_class: `outlet` } },
+  update_solar_schedule: { name: `Update Schedule`, topic: `update_solar_schedule`, id: 'schedule', sensor_type: 'switch',  command: 'true', retain: true, config: { icon: `mdi:sun-angle`, device_class: `outlet` } }
+}
