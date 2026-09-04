@@ -3,11 +3,11 @@ import mqtt from '/app/src/mqtt/index.js'
 import cache from '/app/src/cache/index.js'
 
 import extendedSolar from '/app/src/helpers/extended_solar.js'
-import checkIsBetween from '/app/src/helpers/check_time_between.js'
+import { checkTimeBetween } from '/app/src/helpers/time.js'
 
 export default async function(){
   let battery_ac_charged = dataList.schedule?.battery_ac_charged || 'OFF'
-  if(checkIsBetween('03:00', '03:05', 2)) battery_ac_charged = 'OFF'
+  if(checkTimeBetween('03:00', '03:05', 0, 0)) battery_ac_charged = 'OFF'
   let ac_charge_power = dataList.main?.ac_charge_power || 0
   if(ac_charge_power > 2000) battery_ac_charged = 'ON'
 

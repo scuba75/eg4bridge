@@ -7,6 +7,7 @@ import mainInverters from './main/index.js'
 import calculatedSensors from './calculated/index.js'
 import manualSensors from './manual_sensors/index.js'
 import microInverters from './micro_inverters.js'
+
 const INFLUX_TOKEN = process.env.INFLUX_TOKEN, INFLUX_URL = process.env.INFLUX_URL, INFLUX_ORG = process.env.INFLUX_ORG, INFLUX_BUCKET = process.env.INFLUX_BUCKET;
 let influxClient, influxWriteClient;
 const influxInit = () => {

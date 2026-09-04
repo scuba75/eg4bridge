@@ -29,6 +29,7 @@ export default {
   summer_peak_hours: { name: `Summer Peak Hours`, topic: 'summer_peak_hours', id: 'schedule', sensor_type: 'binary_sensor', retain: true, config: { icon: 'mdi:white-balance-sunny' } },
   peak_hours: { name: `Peak Hours`, topic: 'peak_hours', id: 'schedule', sensor_type: 'binary_sensor', retain: true, config: { icon: 'mdi:lightning-bolt' } },
   battery_ac_charged: { name: `Battery AC Charged (Today)`, topic: 'battery_ac_charged', id: 'schedule', sensor_type: 'binary_sensor', retain: true, config: { icon: 'mdi:battery-arrow-up' } },
+  load_shedding: { name: `Load Shedding`, topic: 'load_shedding', id: 'schedule', sensor_type: 'binary_sensor', retain: true, config: { icon: 'mdi:home-lightning-bolt' } },
 
   enable_extended_solar: { name: `Extended Solar`, topic: `enable_extended_solar`, id: 'schedule', sensor_type: 'switch',  command: 'true', retain: true, config: { icon: `mdi:sun-angle`, device_class: `outlet` } },
   update_solar_schedule: { name: `Update Schedule`, topic: `update_solar_schedule`, id: 'schedule', sensor_type: 'switch',  command: 'true', retain: true, config: { icon: `mdi:sun-angle`, device_class: `outlet` } }

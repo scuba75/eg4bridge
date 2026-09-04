@@ -9,7 +9,7 @@ export default async function(){
   let daily_update_time = dataList?.schedule?.daily_update_time
   if(!daily_update_time) return
 
-  let runTask = checkTime('daily_update_time', daily_update_time, 10, true)
+  let runTask = checkTime('daily_update_time', daily_update_time, 0, 5)
   if(runTask){
     await updateSchedule.all()
     cache.set('daily_update_time', true)

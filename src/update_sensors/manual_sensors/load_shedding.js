@@ -2,11 +2,12 @@ import { dataList } from '/app/src/data_list.js'
 import mqtt from '/app/src/mqtt/index.js'
 import cache from '/app/src/cache/index.js'
 
-import checkIsBetween from '/app/src/helpers/check_time_between.js'
+import { checkTimeBetween } from '/app/src/helpers/time.js'
+
 function checkTime(){
   let grid_end = dataList.schedule.grid_first_end, grid_start = dataList.schedule.peak_end, load_shedding_start = false
   if(!grid_end || !grid_start) return
-  return checkIsBetween(grid_end, grid_start, 2)
+  return checkTimeBetween(grid_end, grid_start, 1, 0)
 }
 function getState(){
   if(checkTime()) return 'ON'

@@ -1,14 +1,11 @@
-import log from './logger.js';
-
-
+import log from '/app/src/logger.js'
 import EG4Bridge from 'eg4-bridge';
 import { dataList } from './data_list.js';
 
+import automation from './automation/index.js'
+import processHoldData from './process_hold_data.js';
 import updateSensors from './update_sensors/index.js';
-import updateHoldData from './update_hold_data.js';
-//import automation from './automation/index.js'
 
-//import SENSOR_CONFIGS from './sensor_configs/index.js';
 import SYSTEM_CONFIGS from '/app/config/config.json' with { type: 'json' };
 
 const INVERTER_CONFIGS = SYSTEM_CONFIGS?.inverters;
@@ -16,8 +13,12 @@ const POWER_CONFIGS = SYSTEM_CONFIGS?.max_powers;
 
 let INPUT_UPDATE_MS = +(process.env.INPUT_UPDATE_MS || 5000), HOLD_UPDATE_MS = +(process.env.HOLD_UPDATE_MS || 10000), INVERTERS = {}, INVERTERS_STATUS;
 
+function queueWrite(inv_num, register, value){
+  if(!inv_num || !INVERTERS[inv_num] || !register) return
+  INVERTERS[inv_num].queueWrite(register, value)
+}
 function init(){
-  try {
+  try{
     if (!INVERTER_CONFIGS || INVERTER_CONFIGS?.length == 0) {
       log.error(`Inverter Config not defined...`);
       setTimeout(init, 5000);
@@ -27,47 +28,37 @@ function init(){
       if (!i || !POWER_CONFIGS[i]) continue;
       dataList.main[`${i}_max`] = POWER_CONFIGS[i];
     }
-    for (let i in INVERTER_CONFIGS) {
-      if (!i || !INVERTER_CONFIGS[i]?.host) continue;
-      let inverter_num = +(+i + 1);
-      INVERTERS[inverter_num] = new EG4Bridge({
-        ...INVERTER_CONFIGS[i],
-        inverter_num: inverter_num,
+    for(let i of INVERTER_CONFIGS){
+      INVERTERS[i.inverter_num] = new EG4Bridge({
+        ...i,
         updateIntervalMs: INPUT_UPDATE_MS,
         holdIntervalMs: HOLD_UPDATE_MS
       });
-      dataList.inverters[inverter_num] = { serial: INVERTER_CONFIGS[i].inverterSerial, inverter_num: inverter_num };
-
-      INVERTERS[inverter_num].on('log', (e) => {
+      dataList.inverters[i.inverter_num] = { serial: i.inverterSerial, inverter_num: i.inverter_num };
+      INVERTERS[i.inverter_num].on('log', (e) => {
         if (log[e?.level]) {
           log[e.level](`[inverter_${e.inverter_num}] ${e.msg}`)
         } else {
           console.log(`[${e.level}][inverter_${e.inverter_num}] ${e.msg}`);
         }
       });
-      INVERTERS[inverter_num].on('scan_status', (d) => log.error(`[inverter_${d.inverter_num}][scan] ${d.msg}`));
-
-      INVERTERS[inverter_num].on('connected', (d) => log.info(`Inverter ${d.inverter_num} Connected!`));
-
-      INVERTERS[inverter_num].on('data', (d) => {
+      INVERTERS[i.inverter_num].on('scan_status', (d) => log.error(`[inverter_${d.inverter_num}][scan] ${d.msg}`));
+      INVERTERS[i.inverter_num].on('connected', (d) => log.info(`Inverter ${d.inverter_num} Connected!`));
+      INVERTERS[i.inverter_num].on('data', (d) => {
         if (!d?.data || !d?.inverter_num) return;
         if (!dataList.inverters[d?.inverter_num]) return;
 
         updateSensors(d.inverter_num, d.data);
       });
-      if (inverter_num == 1) {
-        log.info(`Setting up hold_data reporting for Inverter ${inverter_num}...`);
-
-        INVERTERS[inverter_num].on('hold_data', async (d) => {
-          updateHoldData(d, inverter_num, INVERTERS)
-        });
-
-      }
+      INVERTERS[i.inverter_num].on('hold_data', async (d) => {
+        if(i.inverter_num !== SYSTEM_CONFIGS.write_inverter) return
+        processHoldData(d, i.inverter_num, queueWrite)
+      });
+      INVERTERS_STATUS = true;
     }
-    INVERTERS_STATUS = true;
-  } catch (e) {
-    setTimeout(init, 5000);
-    log.error(e);
+  }catch(e){
+    log.error(e)
+    setTimeout(init, 5000)
   }
 };
 init();
@@ -78,7 +69,7 @@ function start(){
       if (!INVERTERS[i]) continue;
       INVERTERS[i].start();
     }
-    //automation.start()
+    automation.start()
     return true;
   } catch (e) {
     log.error(e);

@@ -1,11 +1,8 @@
 import mqtt from '/app/src/mqtt/index.js';
 import { dataList } from '/app/src/data_list.js';
+import roundValue from '/app/src/helpers/round_value.js'
 
 const POWER_COST = parseFloat(process.env.POWER_COST || "0.1044288425047438");
-
-function roundValue(value, decimal_places){
-  return parseFloat((value || 0)?.toFixed(decimal_places || 2));
-};
 
 function getEstimatedTime(hDiff){
   let ms = Math.floor(Date.now() + (hDiff * 60 * 60 * 1000));

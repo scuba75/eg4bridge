@@ -3,13 +3,13 @@ import mqtt from '/app/src/mqtt/index.js'
 import cache from '/app/src/cache/index.js'
 import { dataList } from '/app/src/data_list.js'
 
-import checkIsBetween from '/app/src/helpers/check_time_between.js'
+import { checkTimeBetween } from '/app/src/helpers/time.js'
 
 export default async function(){
   let peak_start = dataList.schedule?.peak_start, peak_end = dataList.schedule?.peak_end, peak_hours = 'OFF'
   if(!peak_start || !peak_end) return
 
-  let isBetween = checkIsBetween(peak_start, peak_end, 5)
+  let isBetween = checkTimeBetween(peak_start, peak_end, 2, 2)
   if(isBetween) peak_hours = 'ON'
   if(dataList.schedule.peak_hours != peak_hours){
     dataList.schedule.peak_hours = peak_hours

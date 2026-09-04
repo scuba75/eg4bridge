@@ -1,12 +1,9 @@
 import mqtt from '/app/src/mqtt/index.js';
 import { dataList } from '/app/src/data_list.js';
 import previousDay from '../previous_day.js';
+import roundValue from '/app/src/helpers/round_value.js'
 
 const POWER_COST = parseFloat(process.env.POWER_COST || "0.1044288425047438");
-
-function roundValue(value, decimal_places){
-  return parseFloat((value || 0)?.toFixed(decimal_places || 2));
-};
 
 export default async function(influxWrite, timeNow){
   let pv_energy_daily = dataList.main.pv_energy_daily
