@@ -7,7 +7,7 @@ import updateSchedule from '/app/src/update_schedule/index.js'
 
 import { battery_sensors, grid_sensors, load_sensors, pv_sensors, status_sensors } from '/app/src/sensor_configs/index.js'
 
-import CONFIGS from '/app/data/config.json' with { type: 'json' };
+import CONFIGS from '/app/config/config.json' with { type: 'json' };
 
 const INVERTER_CONFIGS = CONFIGS?.inverters;
 

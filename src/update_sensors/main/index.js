@@ -2,7 +2,7 @@ import log from '/app/src/logger.js';
 import { dataList } from '/app/src/data_list.js';
 import mqtt from '/app/src/mqtt/index.js';
 
-import CONFIGS from '/app/data/config.json' with { type: 'json' };
+import CONFIGS from '/app/config/config.json' with { type: 'json' };
 import all_sensors from '/app/src/sensor_configs/index.js'
 
 import updateMain from './update_main.js'

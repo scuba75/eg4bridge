@@ -2,7 +2,7 @@ import mqtt from '/app/src/mqtt/index.js'
 import { dataList } from '/app/src/data_list.js';
 import previousDay from '../previous_day.js';
 
-import CONFIGS from '/app/data/config.json' with { type: 'json' };
+import CONFIGS from '/app/config/config.json' with { type: 'json' };
 
 const INVERTER_CONFIGS = CONFIGS?.inverters;
 

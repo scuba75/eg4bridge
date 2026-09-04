@@ -25,7 +25,7 @@ export default async function(d, inverter_num, queueWrite){
       let desired = await cache.get(i);
       if (!desired?.raw) {
         await cache.set(i, { raw: d.data.schedule[i].raw, decodedValue: decodedValue, register: d.data.schedule[i].register });
-        desired = cache.get(i);
+        desired = await cache.get(i);
       }
       if (desired?.decodedValue && sensor.topic && sensor.id) {
         let desired_topic = `${sensor.topic}_desired`;
