@@ -5,7 +5,7 @@ import { dataList } from '/app/src/data_list.js';
 let MONGO_STATUS
 
 const mongo = new MongoCache({
-   connection_string: 'mongodb://mongo-home-0.mongo-home-internal.home.svc.cluster.local:27021?replicaSet=rs4&ssl=false&compressors=snappy&retryReads=true&retryWrites=true',
+   connection_string: 'mongodb://mongo-home-internal.home.svc.cluster.local:27021?replicaSet=rs4&ssl=false&compressors=snappy&retryReads=true&retryWrites=true',
    db_name: 'inverter_monitor'
 })
 
