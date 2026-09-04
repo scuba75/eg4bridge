@@ -1,101 +1,92 @@
-import { dataList } from '/app/src/data_list.js'
-import Database from 'better-sqlite3';
 import log from '/app/src/logger.js';
-import SQLITE_TABLES from './sqlite_tables.json' with { type: 'json' };
+import { MongoCache } from 'mongo-cache';
+import { dataList } from '/app/src/data_list.js';
 
-const DB_FILE = process.env.SQLITE_FILE || '/app/data/sqlite.db';
+let MONGO_STATUS
 
-const db = new Database(DB_FILE);
+const mongo = new MongoCache({
+   connection_string: 'mongodb://mongo-home-0.mongo-home-internal.home.svc.cluster.local:27021?replicaSet=rs4&ssl=false&compressors=snappy&retryReads=true&retryWrites=true',
+   db_name: 'inverter_monitor'
+})
 
-
-let SQLITE_STATUS, SQLITE_STMT = {};
-
+const collections = [
+  { collection: 'daily', indexes: [
+    { key: { TTL: 1 }, opts: { name: '_TTL', expireAfterSeconds: 7 * 24 * 3600 } }
+  ] }
+]
+async function checkIndex(data){
+    try{
+        for(let i of data?.indexes){
+            let status = await mongo.updateIndex( data.collection, i.key, i.opts )
+            if(!status) return
+        }
+        return true;
+    }catch(e){
+        log.error(e)
+    }
+}
+async function checkIndexes(){
+    try{
+       for(let i of collections){
+            let status = await checkIndex(i);
+            if(!status) return
+       }
+       return true;
+    }catch(e){
+        log.error(e)
+    }
+}
 async function restoreValues(){
   let values_to_restore = [{ key: 'load_shedding', listKey: 'schedule' }]
   for(let i of values_to_restore){
-    let data = await get(i.key)
+    let data = await mongo.get('cache', { _id: i.key })
     if(data?.state) dataList[i.listKey][i.key] = data.state
   }
 }
-async function expireSQLITE(){
-  try {
-    let timeNow = Date.now();
-    for (let i in SQLITE_TABLES) {
-      if (!i || !SQLITE_TABLES[i]?.ttl || !SQLITE_STMT[i]?.expire) continue;
-      log.debug(`Checking Expire for ${i}...`);
-      await SQLITE_STMT[i].expire.run(timeNow - (+SQLITE_TABLES[i].ttl * 1000));
-    }
-    setTimeout(expireSQLITE, 10000);
-  } catch (e) {
-    setTimeout(expireSQLITE, 5000);
-    log.error(e);
-  }
-};
 async function init(){
-  try {
-    for (let i in SQLITE_TABLES) {
-      if (!i || !SQLITE_TABLES[i]?.schema) continue;
-      let status = await db.exec(SQLITE_TABLES[i].schema);
-      log.info(`Table ${i} created...`);
-      SQLITE_STMT[i] = { get: db.prepare(SQLITE_TABLES[i].get), set: db.prepare(SQLITE_TABLES[i].set) };
-      if (SQLITE_TABLES[i].expire) SQLITE_STMT[i].expire = db.prepare(SQLITE_TABLES[i].expire);
-      if (SQLITE_TABLES[i].all) SQLITE_STMT[i].all = db.prepare(SQLITE_TABLES[i].all);
+    try{
+        let status = mongo.status()
+        if(status) status = await checkIndexes()
+
+        if(status){
+            await restoreValues()
+            MONGO_STATUS = true
+            return;
+        }
+        setTimeout(init, 5000);
+    }catch(e){
+        log.error(e)
+        setTimeout(init, 5000);
     }
-    await restoreValues()
-    SQLITE_STATUS = true;
-    expireSQLITE();
-  } catch (e) {
-    log.error(e);
-    setTimeout(init, 5000);
-  }
-};
-init();
+}
+init()
 
 function status(){
-  return SQLITE_STATUS;
+  return MONGO_STATUS;
 };
-async function set(id, data, table = 'cache'){
-  try {
-    if (!id || !data || !SQLITE_STATUS || !SQLITE_STMT[table]?.set) return;
-
-    let timeNow = data?.updated || Date.now();
-    let payload = JSON.stringify(data);
-    let res = await SQLITE_STMT[table]?.set.run({ id: id, data: payload, ttl: timeNow });
-    if (res?.changes) return true;
-
-  } catch (e) {
-    log.error(e);
-  }
-};
-async function get(id, table = 'cache'){
-  try {
-    if (!id || !SQLITE_STATUS || !SQLITE_STMT[table]?.get) return;
-
-    let res = await SQLITE_STMT[table].get.get(id);
-    if (!res?.data) return;
-
-    return JSON.parse(res.data);
-
-  } catch (e) {
-    log.error(e);
-  }
-};
-async function all(table = 'cache'){
-  try {
-
-    if (!SQLITE_STATUS || !SQLITE_STMT[table]?.all) return;
-
-    let res = await SQLITE_STMT[table]?.all.all();
-    if (!res || res?.length == 0) return;
-
-    let array = [];
-    for (let i in res) {
-      if (res[i].data) array.push(JSON.parse(res[i].data));
+async function set(id, data, collection = 'cache'){
+    try{
+        if(!id || !data || !MONGO_STATUS) return;
+        let timeNow = data?.updated || Date.now();
+        return await mongo.set(collection, { _id: id }, data)
+    }catch(e){
+        log.error(e)
     }
-    if (array?.length > 0) return array;
-  } catch (e) {
-    log.error(e);
-  }
-};
-
+}
+async function get(id, collection = 'cache'){
+    try{
+        if(!id || !MONGO_STATUS) return;
+        return await mongo.get(collection, { _id: id }, { _id: 0, TTL: 0 })
+    }catch(e){
+        log.error(e)
+    }
+}
+async function all(collection = 'cache') {
+    try{
+       if(!MONGO_STATUS) return;
+       return await mongo.all(collection, {}, { TTL: 0 })
+    }catch(e){
+        log.error(e)
+    }
+}
 export default { status, set, get, all };
