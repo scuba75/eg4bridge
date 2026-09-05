@@ -20,7 +20,10 @@ export default async function(d, inverter_num, queueWrite){
       dataList.schedule[i] = decodedValue;
 
 
-      if(sensor.topic && sensor.id) await mqtt.sendSensorValue(`solar_inverter/${sensor.id}/${sensor.topic}/state`, decodedValue);
+      if(sensor.topic && sensor.id){
+        await mqtt.sendSensorValue(`solar_inverter/${sensor.id}/${sensor.topic}/state`, decodedValue);
+        await mqtt.sendSensorValue(`solar_inverter/${sensor.id}/${sensor.topic}_attribute/state`, JSON.stringify({ register: d.data.schedule[i].register, raw: d.data.schedule[i].raw }))
+      }
 
       let desired = await cache.get(i);
       if (!desired?.raw) {

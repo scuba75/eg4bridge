@@ -1,8 +1,8 @@
 export default {
-  grid_charge_start: { name: 'Grid Charge Start (Actual)', topic: 'grid_charge_start', id: 'schedule', device: 'Schedule', register: 68, main: true, config: { icon: 'mdi:clock' } },
-  grid_charge_end: { name: 'Grid Charge End (Actual)', topic: 'grid_charge_end', id: 'schedule', device: 'Schedule', register: 69, main: true, config: { icon: 'mdi:clock' } },
-  grid_first_start: { name: 'Grid First Start (Actual)', topic: 'grid_first_start', id: 'schedule', device: 'Schedule', register: 152, main: true, config: { icon: 'mdi:clock' } },
-  grid_first_end: { name: 'Grid First End (Actual)', topic: 'grid_first_end', id: 'schedule', device: 'Schedule', register: 153, main: true, config: { icon: 'mdi:clock' } },
+  grid_charge_start: { name: 'Grid Charge Start (Actual)', topic: 'grid_charge_start', id: 'schedule', device: 'Schedule', register: 68, main: true, config: { icon: 'mdi:clock' }, json_attributes: [ 'register', 'raw' ] },
+  grid_charge_end: { name: 'Grid Charge End (Actual)', topic: 'grid_charge_end', id: 'schedule', device: 'Schedule', register: 69, main: true, config: { icon: 'mdi:clock' }, json_attributes: [ 'register', 'raw' ] },
+  grid_first_start: { name: 'Grid First Start (Actual)', topic: 'grid_first_start', id: 'schedule', device: 'Schedule', register: 152, main: true, config: { icon: 'mdi:clock', }, json_attributes: [ 'register', 'raw' ] },
+  grid_first_end: { name: 'Grid First End (Actual)', topic: 'grid_first_end', id: 'schedule', device: 'Schedule', register: 153, main: true, config: { icon: 'mdi:clock' }, json_attributes: [ 'register', 'raw' ] },
   grid_charge_start_desired: { name: 'Grid Charge Start (Desired)', topic: 'grid_charge_start_desired', id: 'schedule', device: 'Schedule', main: true, config: { icon: 'mdi:clock' } },
   grid_charge_end_desired: { name: 'Grid Charge End (Desired)', topic: 'grid_charge_end_desired', id: 'schedule', device: 'Schedule', main: true, config: { icon: 'mdi:clock' } },
   grid_first_start_desired: { name: 'Grid First Start (Desired)', topic: 'grid_first_start_desired', id: 'schedule', device: 'Schedule', main: true, config: { icon: 'mdi:clock' } },

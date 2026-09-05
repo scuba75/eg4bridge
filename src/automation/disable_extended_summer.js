@@ -11,7 +11,7 @@ export default async function(){
   if(!grid_first_end) return
   let runTask = checkTime('grid_first_end', grid_first_end, 30, -25)
   if(runTask){
-    log.info(`Disabling extended solar if battery is less than 95%. Current battery SOC: ${dataList?.main?.battery_soc || 0}%, Extended Solar is ${dataList?.schedule?.enable_extended_solar}`)
+    //log.info(`Disabling extended solar if battery is less than 95%. Current battery SOC: ${dataList?.main?.battery_soc || 0}%, Extended Solar is ${dataList?.schedule?.enable_extended_solar}`)
     if(dataList?.schedule?.summer_peak_hours != 'ON') return
     if(dataList?.schedule?.enable_extended_solar != 'ON') return
     if((dataList?.main?.battery_soc || 0) >= 95) return

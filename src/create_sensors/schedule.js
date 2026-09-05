@@ -20,6 +20,7 @@ export default async function(){
       }
       if(i.command && i.sensor_type) sensor_config.command_topic = `solar_inverter/set/${i.sensor_type}_cmd/${i.topic}`
       if(i.config) sensor_config = { ...sensor_config, ...i.config }
+      if(i.json_attributes?.length > 0) sensor_config.json_attributes_topic = `solar_inverter/schedule/${i.topic}_attribute/state`
       await createSensor(i, sensor_config, `homeassistant/${i.sensor_type || 'sensor'}/solar_inverter_schedule/${i.topic}/config`)
     }
     log.info(`Created all schedule sensors...`)

@@ -6,7 +6,6 @@ import { dataList } from '/app/src/data_list.js';
 
 export default async function( sensor_info, sensor_config, registerTopic ){
   if(!sensor_config || !sensor_info) return
-
   await mqtt.registerSensor(registerTopic, sensor_config)
   sensorList.set(sensor_config.state_topic, sensor_info.retain)
   let state_data = await cache.get(sensor_info.topic)

@@ -5,5 +5,6 @@ export default {
   role: { name: 'Role', topic: 'role', id: 'status', individual: 'true', unit_of_measurement: 'status', config: { icon: 'mdi:account' } },
   status_text: { name: 'Status', topic: 'status_text', id: 'status', main: 'master', unit_of_measurement: 'status', individual: true, config: { icon: 'mdi:state-machine' } },
   temperature: { name: 'Temperature', topic: 'temperature', id: 'status', main: 'average', individual: true, config: { state_class: 'measurement', unit_of_measurement: '°C', device_class: 'temperature' } },
-  updated: { name: 'Data Updated', topic: 'updated', id: 'status', main: 'master', unit_of_measurement: 'status', config: { entity_category: 'diagnostic', device_class: 'timestamp', value_template: '{{ int(value) | timestamp_local }}' } }
+  //updated: { name: 'Data Updated', topic: 'updated', id: 'status', main: 'master', unit_of_measurement: 'status', config: { entity_category: 'diagnostic', device_class: 'timestamp', value_template: '{{ int(value) | timestamp_local }}' } },
+  inverter_connected: { name: `Open Lux`, topic: 'inverter_connected', id: 'status', sensor_type: 'binary_sensor', individual: true, main: true, config: { device_class : 'connectivity', expire_after: 60 } }
 }

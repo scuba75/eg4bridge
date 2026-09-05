@@ -56,7 +56,7 @@ export default async function(inv_num, data){
     influxWriteClient.flush();
     dataList.main.updated = Math.round(timeNow / 1000);
     dataList.updated = timeNow;
-    if (dataList?.main?.updated) mqtt.sendSensorValue('solar_inverter/status/updated/state', dataList.main.updated);
+    //if (dataList?.main?.updated) mqtt.sendSensorValue('solar_inverter/status/updated/state', dataList.main.updated);
   }catch(e){
     log.error(e)
   }
