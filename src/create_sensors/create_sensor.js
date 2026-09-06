@@ -11,7 +11,7 @@ export default async function( sensor_info, sensor_config, registerTopic ){
   let state_data = await cache.get(sensor_info.topic)
   if(sensor_info?.sensor_type == 'switch' && !state_data?.state) state_data = { state: 'OFF' }
   if(state_data?.state){
-    if(sensor_info.id && sensor_info.topic) dataList[sensor_info.id][sensor_info.topic] = state_data.state
+    if(sensor_info.id && sensor_info.topic && dataList[sensor_info.id]) dataList[sensor_info.id][sensor_info.topic] = state_data.state
     await mqtt.sendSensorValue(sensor_config.state_topic, state_data?.state)
   }
 }

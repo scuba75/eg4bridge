@@ -32,5 +32,6 @@ export default {
   load_shedding: { name: `Load Shedding`, topic: 'load_shedding', id: 'schedule', sensor_type: 'binary_sensor', retain: true, config: { icon: 'mdi:home-lightning-bolt' } },
 
   enable_extended_solar: { name: `Extended Solar`, topic: `enable_extended_solar`, id: 'schedule', sensor_type: 'switch',  command: 'true', retain: true, config: { icon: `mdi:sun-angle`, device_class: `outlet` } },
-  update_solar_schedule: { name: `Update Schedule`, topic: `update_solar_schedule`, id: 'schedule', sensor_type: 'switch',  command: 'true', retain: true, config: { icon: `mdi:sun-angle`, device_class: `outlet` } }
+  update_solar_schedule: { name: `Update Schedule`, topic: `update_solar_schedule`, id: 'schedule', sensor_type: 'switch',  command: 'true', retain: true, config: { icon: `mdi:sun-angle`, device_class: `outlet` } },
+  daily_bridge_reset: { name: `Daily Bridge Reset`, topic: `daily_bridge_reset`, id: 'schedule', sensor_type: 'switch',  command: 'true', retain: true, config: {  icon: `mdi:state-machine`, device_class: `outlet` } }
 }

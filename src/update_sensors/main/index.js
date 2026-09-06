@@ -19,8 +19,11 @@ export default async function(inv_num, data, influxWrite, timeNow){
     if (!dataList.main) dataList.main = {};
 
     dataList.inverters[inv_num].connected = timeNow
-    
-    await mqtt.sendSensorValue(`solar_inverter/${inv_num}/status/inverter_connected/state`, 'ON')
+    if(data?.status){
+      dataList.inverters[inv_num].status = data.status
+      await updateMain(inv_num, data?.status, influxWrite, timeNow, 'status', null, MASTER_INVERTER)
+    } 
+    await mqtt.sendSensorValue(`solar_inverter/${inv_num}/status/bridge_connected/state`, 'ON')
     for(let i in data){
       if (!i || (!data[i] && +(data[i] != 0))) continue;
       dataList.inverters[inv_num][i] = data[i];

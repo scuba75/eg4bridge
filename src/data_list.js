@@ -1,7 +1,7 @@
 import log from '/app/src/logger.js';
 import cache from '/app/src/cache/index.js';
 
-let dataList = { inverters: {}, main: {}, schedule: {}, micro_inverters: {} }, datalist_ready;
+let dataList = { inverters: {}, main: {}, schedule: {}, micro_inverters: {}, status: {} }, datalist_ready;
 
 const SYNC_INTERVAL = (process.env.SYNC_INTERVAL_SECONDS || 20);
 

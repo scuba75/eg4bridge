@@ -7,6 +7,23 @@ import CONFIGS from '/app/config/config.json' with { type: 'json' };
 
 const INVERTER_CONFIGS = CONFIGS?.inverters;
 
+const INVERTER_STATE = {
+  "0": "Standby",
+  "2": "FW Updating",
+  "4": "PV On-grid",
+  "8": "PV Charge",
+  "12": "PV Charge/Grid",
+  "16": "PV & Battery/Grid",
+  "17": "Bypass",
+  "20": "PV & Battery/Grid",
+  "25": "PV Charge/Bypass",
+  "32": "AC Charge",
+  "40": "PV & AC Charge",
+  "64": "Battery",
+  "128": "PV Off Grid",
+  "136": "PV Charge Off Grid",
+  "192": "PV & Battery Off Grid"
+}
 
 function getMasterInvNum(MASTER_INVERTER, timeNow){
   if(dataList.inverters[MASTER_INVERTER]?.connected && dataList.inverters[MASTER_INVERTER]?.connected + 120 > timeNow) return MASTER_INVERTER
@@ -18,8 +35,15 @@ function getMasterInvNum(MASTER_INVERTER, timeNow){
   return MASTER_INVERTER
 }
 export default async function(inv_num, data, influxWrite, timeNow, sensor_key, sensor, MASTER_INVERTER){
-  let state_topic = `solar_inverter/${sensor.id}/${sensor.topic}/state`;
+  
   let master_inv = getMasterInvNum(MASTER_INVERTER, timeNow) || MASTER_INVERTER
+  if(inv_num == master_inv && sensor_key == 'status' && INVERTER_STATE[data]){
+    dataList.main.status_text = INVERTER_STATE[data]
+    mqtt.sendSensorValue(`solar_inverter/status/status_text/state`, dataList.main.status_text)
+    return
+  }
+  if(sensor_key == 'status_text' || !sensor) return
+  let state_topic = `solar_inverter/${sensor.id}/${sensor.topic}/state`;
   if (sensor.main == "master" && inv_num == master_inv) {
     let value = data;
     if (sensor_key == 'master_slave') value = inv_num;

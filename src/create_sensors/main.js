@@ -17,7 +17,7 @@ async function registerInverter(inv_num, info){
       via_device: 'solar_inverter_main'
     }
   }
-  if(info.command) sensor_config.command_topic = `solar_inverter/set/${info.id}_cmd/${info.topic}`
+  if(info.command) sensor_config.command_topic = `solar_inverter/set/${info.sensor_type || 'sensor'}_cmd/${info.topic}_${inv_num}`
   if(info.config) sensor_config = { ...sensor_config, ...info.config }
   await createSensor(info, sensor_config, `homeassistant/${info.sensor_type || 'sensor'}/solar_inverter_${info.id}_${inv_num}/${info.topic}/config`)
 }
@@ -37,7 +37,7 @@ export default async function(INVERTER_CONFIGS = [], SENSOR_LIST){
           unique_id: `${s.id}_${s.topic}`,
           device: JSON.parse(JSON.stringify(sensor_device))
         }
-        if(s.command) sensor_config.command_topic = `solar_inverter/set/${s.id}_cmd/${s.topic}`
+        if(s.command) sensor_config.command_topic = `solar_inverter/set/${s.sensor_type || 'sensor'}_cmd/${s.topic}`
         if(s.config) sensor_config = { ...sensor_config, ...s.config }
         await createSensor(s, sensor_config, `homeassistant/${s.sensor_type || 'sensor'}/solar_inverter_${s.id}/${s.topic}/config`)
       }
